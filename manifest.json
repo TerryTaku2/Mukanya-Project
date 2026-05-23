@@ -1,0 +1,58 @@
+{
+  "name": "Mukanya Express",
+  "short_name": "Mukanya",
+  "description": "Loyalty card management for transport operators — record rides, track stamps, manage free rides.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B1F5C",
+  "theme_color": "#0B1F5C",
+  "lang": "en",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "image/ChatGPT Image May 23, 2026, 09_25_43 PM.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Record a Ride",
+      "short_name": "Record",
+      "description": "Quickly record a new passenger ride",
+      "url": "/?action=record",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Card Lookup",
+      "short_name": "Lookup",
+      "description": "Look up a passenger card and stamp status",
+      "url": "/?action=lookup",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "image/ChatGPT Image May 23, 2026, 09_25_43 PM.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Mukanya Express Dashboard"
+    }
+  ]
+}

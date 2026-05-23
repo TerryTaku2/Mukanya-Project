@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mukanya Express – Loyalty System</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0B1F5C;--blue:#1842B4;--blue2:#2356D4;
+  --gold:#F5C200;--gold-d:#C49A00;
+  --bg:#EEF2FF;--surface:#fff;--border:#D8E0F5;
+  --muted:#6B7BB8;--red:#DC2626;--green:#16a34a;
+  --r:14px;--shadow:0 2px 14px rgba(11,31,92,.10);--shadow-lg:0 8px 32px rgba(11,31,92,.18);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--navy);font-size:15px;display:flex;flex-direction:column}
+.screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.screen.active{display:flex}
+
+/* LOADING */
+#scr-loading{background:var(--navy);align-items:center;justify-content:center}
+.loading-wrap{display:flex;flex-direction:column;align-items:center;gap:20px}
+.spinner{width:48px;height:48px;border:4px solid rgba(245,194,0,.2);border-top:4px solid var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-wrap p{color:rgba(255,255,255,.6);font-size:14px;letter-spacing:.06em}
+.loading-wrap .logo-l{width:72px;height:72px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.loading-wrap .logo-l span{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--navy)}
+
+/* PORTAL */
+#scr-portal{background:var(--navy);align-items:center;justify-content:center;padding:24px}
+.portal-wrap{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center}
+.portal-logo{width:80px;height:80px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 4px 24px rgba(245,194,0,.35)}
+.portal-logo span{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:var(--navy)}
+.portal-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:#fff;letter-spacing:.05em;text-align:center;line-height:1.1}
+.portal-sub{font-size:11px;color:var(--gold);letter-spacing:.14em;margin:6px 0 36px;font-weight:600;text-align:center}
+.portal-cards{width:100%;display:flex;flex-direction:column;gap:12px}
+.portal-card{background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.14);border-radius:16px;padding:20px;cursor:pointer;display:flex;align-items:center;gap:16px;transition:.2s}
+.portal-card:hover{background:rgba(255,255,255,.12);border-color:var(--gold)}
+.portal-card:active{transform:scale(.97)}
+.pc-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.pc-owner{background:rgba(245,194,0,.18)}
+.pc-staff{background:rgba(24,66,180,.3)}
+.pc-info h3{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;letter-spacing:.04em;line-height:1.1}
+.pc-info p{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px}
+.sync-chip{display:flex;align-items:center;gap:6px;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:#4ade80;letter-spacing:.05em;margin-bottom:20px}
+.sync-chip.off{background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.3);color:#f87171}
+.sync-chip.mid{background:rgba(245,194,0,.15);border-color:rgba(245,194,0,.3);color:var(--gold)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+/* LOGIN */
+#scr-login{background:var(--navy);align-items:center;justify-content:center;padding:24px}
+.login-wrap{width:100%;max-width:380px}
+.login-back{color:rgba(255,255,255,.5);background:none;border:none;font-size:13px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;gap:6px;padding:0}
+.login-back:hover{color:var(--gold)}
+.login-header{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.login-icon{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.li-staff{background:rgba(24,66,180,.3)}
+.login-header h2{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:.04em}
+.login-header p{font-size:12px;color:rgba(255,255,255,.45);margin-top:3px}
+.lfield{margin-bottom:14px}
+.lfield label{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.1em;margin-bottom:6px}
+.lfield input{width:100%;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.14);border-radius:10px;padding:12px 14px;font-size:15px;color:#fff;font-family:'Barlow',sans-serif;outline:none;transition:.2s}
+.lfield input::placeholder{color:rgba(255,255,255,.25)}
+.lfield input:focus{border-color:var(--gold);background:rgba(255,255,255,.12)}
+.login-btn{width:100%;background:var(--gold);border:none;border-radius:12px;padding:14px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--navy);cursor:pointer;letter-spacing:.06em;transition:.15s;margin-top:4px}
+.login-btn:active{transform:scale(.97)}
+.login-err{background:rgba(220,38,38,.2);border:1px solid rgba(220,38,38,.4);border-radius:8px;padding:10px 14px;color:#FCA5A5;font-size:13px;margin-bottom:14px;display:none}
+
+/* PIN */
+#scr-pin{background:var(--navy);align-items:center;justify-content:center;padding:24px}
+.pin-wrap{width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center}
+.pin-back{align-self:flex-start;color:rgba(255,255,255,.5);background:none;border:none;font-size:13px;cursor:pointer;margin-bottom:24px;display:flex;align-items:center;gap:6px;padding:0}
+.pin-logo{width:64px;height:64px;background:rgba(245,194,0,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px}
+.pin-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:.04em}
+.pin-sub{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:24px;text-align:center}
+.pin-dots{display:flex;gap:12px;margin-bottom:28px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:transparent;transition:.2s}
+.pin-dot.on{background:var(--gold);border-color:var(--gold)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:240px}
+.pin-key{padding:18px;border-radius:12px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:#fff;cursor:pointer;text-align:center;transition:.15s}
+.pin-key:active{background:rgba(255,255,255,.16);transform:scale(.95)}
+.pin-key.del{font-size:16px;color:rgba(255,255,255,.5)}
+.pin-err{color:#FCA5A5;font-size:13px;margin-top:16px;min-height:20px;text-align:center}
+
+/* APP SHELL */
+#scr-app{flex-direction:column}
+.topbar{background:var(--navy);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-logo{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tb-logo span{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;color:var(--navy)}
+.tb-info h2{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#fff;letter-spacing:.04em;line-height:1.1}
+.tb-info p{font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.07em}
+.tb-right{display:flex;align-items:center;gap:7px}
+.user-chip{background:rgba(255,255,255,.1);border-radius:20px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,.85);font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-logout{background:rgba(255,255,255,.1);border:none;border-radius:8px;width:32px;height:32px;color:rgba(255,255,255,.6);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.live-bar{display:flex;align-items:center;justify-content:center;gap:6px;padding:5px;font-size:11px;font-weight:700;letter-spacing:.05em;flex-shrink:0}
+.live-bar.online{background:#DCFCE7;color:#166534}
+.live-bar.offline{background:#FEF2F2;color:#991B1B}
+.live-bar.syncing{background:#FEF9C3;color:#854D0E}
+.live-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:'Barlow',sans-serif;font-size:10px;font-weight:600;letter-spacing:.04em;transition:.15s;gap:2px}
+.nav-icon{font-size:20px;line-height:1}
+.nav-btn.active{color:var(--blue)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.page{display:none;padding:14px}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--surface);border-radius:var(--r);padding:16px;margin-bottom:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-hdr{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:var(--blue);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--gold);letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between}
+
+/* FORM */
+.ff{margin-bottom:13px}
+.ff label,.lbl{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.09em;margin-bottom:5px}
+.ff input,.ff select,.ff textarea,input.inp,select.inp{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;color:var(--navy);background:var(--surface);outline:none;font-family:'Barlow',sans-serif;transition:.2s}
+.ff input:focus,.ff select:focus{border-color:var(--blue)}
+.ff textarea{resize:vertical;min-height:52px}
+
+/* STAMPS */
+.stamp-row{display:flex;gap:7px}
+.stp{flex:1;padding:11px 2px;border:2px solid var(--border);border-radius:10px;background:var(--surface);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--muted);cursor:pointer;text-align:center;transition:.15s;line-height:1}
+.stp span.sl{font-size:8px;font-weight:600;letter-spacing:.05em;display:block;margin-top:2px;opacity:.6}
+.stp.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.stp.free-btn{border-color:var(--gold);color:var(--gold-d)}
+.stp.free-btn.on{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+
+/* BUTTONS */
+.btn{border:none;border-radius:10px;padding:12px 18px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.05em;transition:.15s;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff;width:100%;padding:14px}
+.btn-gold{background:var(--gold);color:var(--navy);width:100%;padding:14px}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--border);width:100%;padding:13px}
+.btn-danger{background:var(--red);color:#fff;width:100%;padding:14px}
+.btn-sm{padding:7px 13px;font-size:13px;width:auto}
+.btn-icon{background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:13px;color:var(--muted);transition:.15s}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--surface);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border)}
+.stat-n{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--navy);line-height:1}
+.stat-l{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.08em;margin-top:3px}
+
+/* RECORDS */
+.rec{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid #F0F3FA}
+.rec:last-child{border-bottom:none}
+.rec-name{font-weight:700;font-size:14px;line-height:1.2}
+.rec-sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
+.badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.b-stamp{background:#E8EEFF;color:var(--blue)}
+.b-free{background:#FEF9C3;color:#854D0E}
+
+/* CARD PREVIEW */
+.cp{background:linear-gradient(135deg,var(--navy) 0%,var(--blue2) 100%);border-radius:16px;padding:18px;margin-bottom:14px;color:#fff;box-shadow:var(--shadow-lg)}
+.cp-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.cp-brand{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:900;letter-spacing:.04em;line-height:1}
+.cp-sub-t{font-size:9px;color:var(--gold);letter-spacing:.12em;font-weight:700;margin-top:3px}
+.cp-no{text-align:right}
+.cp-no .num{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800}
+.cp-no .lbl2{font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.07em}
+.cp-stamps{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.cp-s{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:rgba(255,255,255,.22);flex-shrink:0;transition:.3s}
+.cp-s.on{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5);color:#fff}
+.cp-s.free{background:var(--gold);border-color:var(--gold);color:var(--navy);font-size:10px}
+.cp-s.free.on{box-shadow:0 0 14px rgba(245,194,0,.4)}
+.cp-arr{color:rgba(255,255,255,.2);font-size:13px;flex-shrink:0}
+.cp-foot{display:flex;justify-content:space-between;align-items:flex-end}
+.cp-pass{font-weight:700;font-size:14px}
+.cp-status{font-size:12px;font-weight:700;text-align:right}
+.cp-status.ready{color:var(--gold)}
+.cp-status.go{color:rgba(255,255,255,.55)}
+
+/* USER LIST */
+.user-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F0F3FA}
+.user-item:last-child{border-bottom:none}
+.uav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;flex-shrink:0}
+.av-o{background:#DCFCE7;color:#166534}
+.av-d{background:#E8EEFF;color:var(--blue)}
+.av-c{background:#FEF3C7;color:#92400E}
+.uinfo{flex:1;min-width:0}
+.uinfo strong{font-size:14px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uinfo small{font-size:11px;color:var(--muted);font-weight:600}
+.uact{display:flex;gap:6px}
+
+/* MISC */
+.rv-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F0F3FA;font-size:14px}
+.rv-item:last-child{border-bottom:none}
+.reg{background:var(--gold);color:var(--navy);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:.08em;padding:3px 10px;border-radius:6px}
+.search-box{position:relative;margin-bottom:12px}
+.search-box input{padding-left:36px}
+.s-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
+.filters{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);white-space:nowrap;transition:.15s}
+.pill.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between}
+.modal-x{background:var(--bg);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--navy);color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:700;opacity:0;transition:.3s;z-index:200;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green)}
+.toast.gold{background:var(--gold);color:var(--navy)}
+.toast.err{background:var(--red)}
+.empty{text-align:center;padding:28px 12px;color:var(--muted)}
+.empty .ei{font-size:38px;margin-bottom:8px}
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sec-hdr h3{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.09em}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="screen active" id="scr-loading">
+  <div class="loading-wrap">
+    <div class="logo-l"><span>M</span></div>
+    <div class="spinner"></div>
+    <p>LOADING...</p>
+  </div>
+</div>
+
+<!-- PORTAL -->
+<div class="screen" id="scr-portal">
+  <div class="portal-wrap">
+    <div class="portal-logo"><span>M</span></div>
+    <div class="portal-title">MUKANYA EXPRESS</div>
+    <div class="portal-sub">★ LOYALTY MANAGEMENT SYSTEM ★</div>
+    <div class="sync-chip mid" id="portal-sync">
+      <div class="sync-dot"></div><span id="portal-sync-txt">Connecting...</span>
+    </div>
+    <div class="portal-cards">
+      <div class="portal-card" onclick="goLogin('owner')">
+        <div class="pc-icon pc-owner">👑</div>
+        <div class="pc-info"><h3>OWNER / ADMIN</h3><p>Full dashboard, reports &amp; settings</p></div>
+      </div>
+      <div class="portal-card" onclick="goLogin('driver')">
+        <div class="pc-icon pc-staff">🚐</div>
+        <div class="pc-info"><h3>DRIVER / CONDUCTOR</h3><p>Record rides and check card status</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="scr-login">
+  <div style="background:var(--navy);flex:1;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="login-wrap">
+      <button class="login-back" onclick="showScr('scr-portal')">← Back</button>
+      <div class="login-header">
+        <div class="login-icon li-staff">🚐</div>
+        <div><h2>DRIVER / CONDUCTOR</h2><p>Sign in to record rides</p></div>
+      </div>
+      <div class="login-err" id="login-err"></div>
+      <div class="lfield"><label>USERNAME</label><input id="l-user" type="text" placeholder="Your username" autocomplete="off" autocapitalize="none"></div>
+      <div class="lfield"><label>PASSWORD</label><input id="l-pass" type="password" placeholder="Your password"></div>
+      <button class="login-btn" onclick="doLogin()">SIGN IN →</button>
+    </div>
+  </div>
+</div>
+
+<!-- OWNER PIN -->
+<div class="screen" id="scr-pin">
+  <div style="background:var(--navy);flex:1;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="pin-wrap">
+      <button class="pin-back" onclick="showScr('scr-portal')">← Back</button>
+      <div class="pin-logo">👑</div>
+      <div class="pin-title">OWNER DASHBOARD</div>
+      <div class="pin-sub">Enter your 4-digit PIN</div>
+      <div class="pin-dots">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pk('1')">1</button><button class="pin-key" onclick="pk('2')">2</button><button class="pin-key" onclick="pk('3')">3</button>
+        <button class="pin-key" onclick="pk('4')">4</button><button class="pin-key" onclick="pk('5')">5</button><button class="pin-key" onclick="pk('6')">6</button>
+        <button class="pin-key" onclick="pk('7')">7</button><button class="pin-key" onclick="pk('8')">8</button><button class="pin-key" onclick="pk('9')">9</button>
+        <button class="pin-key del" onclick="pk('del')">⌫</button><button class="pin-key" onclick="pk('0')">0</button><button class="pin-key" onclick="pk('ok')">OK</button>
+      </div>
+      <div class="pin-err" id="pin-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="scr-app">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo"><span>M</span></div>
+      <div class="tb-info"><h2>MUKANYA EXPRESS</h2><p id="tb-sub">LOYALTY SYSTEM</p></div>
+    </div>
+    <div class="tb-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="tb-logout" onclick="doLogout()">⏻</button>
+    </div>
+  </div>
+  <div class="live-bar syncing" id="live-bar"><div class="live-dot"></div><span id="live-txt">Connecting...</span></div>
+  <div class="scroll" id="main-scroll">
+
+    <!-- RECORD RIDE -->
+    <div class="page active" id="pg-record">
+      <div class="card">
+        <div class="card-hdr">✍️ Record a Ride</div>
+        <div class="ff"><label>PASSENGER NAME</label><input class="inp" id="r-name" placeholder="e.g. Tendai Moyo" autocomplete="off"></div>
+        <div class="ff"><label>CARD NUMBER</label><input class="inp" id="r-card" placeholder="e.g. 0001" inputmode="numeric" oninput="onCardInput()"></div>
+        <div class="ff"><label>ROUTE</label><select class="inp" id="r-route"><option value="">— Select route —</option></select></div>
+        <div class="ff"><label>VEHICLE REG</label><select class="inp" id="r-vehicle"><option value="">— Select vehicle —</option></select></div>
+        <div class="ff"><label>STAMP GIVEN</label>
+          <div class="stamp-row" id="stamp-row-dynamic">
+            <button class="stp" onclick="ps(1)">1<span class="sl">RIDE</span></button>
+            <button class="stp" onclick="ps(2)">2<span class="sl">RIDE</span></button>
+            <button class="stp" onclick="ps(3)">3<span class="sl">RIDE</span></button>
+            <button class="stp" onclick="ps(4)">4<span class="sl">RIDE</span></button>
+            <button class="stp free-btn" onclick="ps(5)">★<span class="sl">FREE</span></button>
+          </div>
+          <div id="stamp-hint" style="font-size:11px;color:var(--muted);margin-top:5px"></div>
+        </div>
+        <div class="ff"><label>NOTE (OPTIONAL)</label><textarea class="inp" id="r-note" placeholder="Any remark..."></textarea></div>
+        <button class="btn btn-primary" onclick="saveRide()">✓ SAVE RIDE RECORD</button>
+      </div>
+    </div>
+
+    <!-- CARD LOOKUP -->
+    <div class="page" id="pg-lookup">
+      <div class="card">
+        <div class="card-hdr">🎫 Card Lookup</div>
+        <div class="ff"><label>ENTER CARD NUMBER</label><input class="inp" id="lk-num" inputmode="numeric" placeholder="e.g. 0001" oninput="lookupCard()"></div>
+      </div>
+      <div id="lk-result"></div>
+    </div>
+
+    <!-- TODAY -->
+    <div class="page" id="pg-today">
+      <div class="stats" id="today-stats"></div>
+      <div class="card">
+        <div class="sec-hdr"><h3>TODAY'S RIDES</h3><button class="btn btn-sm btn-gold" onclick="doExport(myTodayRides(),'today')">⬇ Export</button></div>
+        <div id="today-list"></div>
+      </div>
+    </div>
+
+    <!-- STAFF RECORDS -->
+    <div class="page" id="pg-staffrecords">
+      <div class="search-box"><span class="s-icon">🔍</span><input type="text" class="inp" placeholder="Search name, card, route..." oninput="searchStaffRec(this.value)" style="padding-left:36px"></div>
+      <div class="filters">
+        <button class="pill on" onclick="staffRfilter('all',this)">All</button>
+        <button class="pill" onclick="staffRfilter('stamps',this)">Stamps</button>
+        <button class="pill" onclick="staffRfilter('free',this)">Free Rides</button>
+        <button class="pill" onclick="staffRfilter('today',this)">Today</button>
+        <button class="pill" onclick="staffRfilter('week',this)">This Week</button>
+      </div>
+      <div class="card"><div id="staff-all-recs"></div></div>
+    </div>
+
+    <!-- STAFF SETTINGS -->
+    <div class="page" id="pg-mysettings">
+      <div class="card">
+        <div class="card-hdr">🔐 Change My Password</div>
+        <div class="ff"><label>CURRENT PASSWORD</label><input class="inp" id="sp-old" type="password"></div>
+        <div class="ff"><label>NEW PASSWORD</label><input class="inp" id="sp-new" type="password" placeholder="Min 4 characters"></div>
+        <div class="ff"><label>CONFIRM NEW PASSWORD</label><input class="inp" id="sp-cf" type="password"></div>
+        <button class="btn btn-primary" onclick="changeMyPass()">SAVE PASSWORD</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page" id="pg-dash">
+      <div class="stats" id="dash-stats"></div>
+      <div class="card">
+        <div class="sec-hdr"><h3>RECENT RIDES — ALL DRIVERS</h3><button class="btn btn-sm btn-gold" onclick="doExport(DB.rides,'all_rides')">⬇ Export All</button></div>
+        <div id="dash-recent"></div>
+      </div>
+    </div>
+
+    <!-- ALL RECORDS -->
+    <div class="page" id="pg-records">
+      <div class="search-box"><span class="s-icon">🔍</span><input type="text" class="inp" placeholder="Search name, card, route, driver..." oninput="searchRec(this.value)" style="padding-left:36px"></div>
+      <div class="filters">
+        <button class="pill on" onclick="rfilter('all',this)">All</button>
+        <button class="pill" onclick="rfilter('stamps',this)">Stamps</button>
+        <button class="pill" onclick="rfilter('free',this)">Free Rides</button>
+        <button class="pill" onclick="rfilter('today',this)">Today</button>
+        <button class="pill" onclick="rfilter('week',this)">This Week</button>
+      </div>
+      <div class="card"><div id="all-recs"></div></div>
+    </div>
+
+    <!-- PASSENGERS -->
+    <div class="page" id="pg-passengers">
+      <button class="btn btn-primary" style="margin-bottom:14px" onclick="openM('m-addpassenger')">+ REGISTER NEW PASSENGER</button>
+      <div class="search-box"><span class="s-icon">🔍</span><input type="text" class="inp" placeholder="Search name or card..." oninput="searchPassengers(this.value)" style="padding-left:36px"></div>
+      <div class="card"><div id="passengers-list"></div></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="pg-users">
+      <button class="btn btn-primary" style="margin-bottom:14px" onclick="openM('m-adduser')">+ ADD NEW USER</button>
+      <div class="card"><div class="card-hdr">👥 All Users</div><div id="users-list"></div></div>
+    </div>
+
+    <!-- SETUP -->
+    <div class="page" id="pg-setup">
+      <div class="card"><div class="card-hdr">🗺️ Routes <button class="btn-icon btn-sm" onclick="openM('m-route')">+ Add</button></div><div id="routes-list"></div></div>
+      <div class="card"><div class="card-hdr">🚐 Vehicles <button class="btn-icon btn-sm" onclick="openM('m-vehicle')">+ Add</button></div><div id="vehicles-list"></div></div>
+      <div class="card">
+        <div class="card-hdr">🔐 Change PIN</div>
+        <div class="ff"><label>CURRENT PIN</label><input class="inp" id="cp-old" type="password" maxlength="4" inputmode="numeric"></div>
+        <div class="ff"><label>NEW PIN</label><input class="inp" id="cp-new" type="password" maxlength="4" inputmode="numeric"></div>
+        <div class="ff"><label>CONFIRM NEW PIN</label><input class="inp" id="cp-cf" type="password" maxlength="4" inputmode="numeric"></div>
+        <button class="btn btn-primary" onclick="changePIN()">SAVE PIN</button>
+      </div>
+      <div class="card"><div class="card-hdr">⚠️ Data</div><button class="btn btn-danger" onclick="clearRides()">🗑 Clear All Ride Records</button></div>
+    </div>
+
+  </div>
+  <div class="bottom-nav" id="bottom-nav"></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="m-adduser"><div class="modal">
+  <div class="modal-title">Add New User <button class="modal-x" onclick="closeM('m-adduser')">✕</button></div>
+  <div class="ff"><label>FULL NAME</label><input class="inp" id="nu-name" placeholder="e.g. John Banda"></div>
+  <div class="ff"><label>USERNAME</label><input class="inp" id="nu-user" placeholder="e.g. johnbanda" autocapitalize="none"></div>
+  <div class="ff"><label>PASSWORD</label><input class="inp" id="nu-pass" type="password" placeholder="Min 4 characters"></div>
+  <div class="ff"><label>ROLE</label><select class="inp" id="nu-role"><option value="driver">Driver</option><option value="conductor">Conductor</option></select></div>
+  <div class="ff"><label>ASSIGN VEHICLE (optional)</label><select class="inp" id="nu-veh"><option value="">— None —</option></select></div>
+  <button class="btn btn-primary" onclick="addUser()" style="margin-top:6px">✓ CREATE USER</button>
+</div></div>
+
+<div class="modal-bg" id="m-edituser"><div class="modal">
+  <div class="modal-title">Edit User <button class="modal-x" onclick="closeM('m-edituser')">✕</button></div>
+  <input type="hidden" id="eu-id">
+  <div class="ff"><label>FULL NAME</label><input class="inp" id="eu-name"></div>
+  <div class="ff"><label>ROLE</label><select class="inp" id="eu-role"><option value="driver">Driver</option><option value="conductor">Conductor</option></select></div>
+  <div class="ff"><label>ASSIGN VEHICLE</label><select class="inp" id="eu-veh"><option value="">— None —</option></select></div>
+  <div class="ff"><label>RESET PASSWORD (leave blank to keep)</label><input class="inp" id="eu-pass" type="password" placeholder="New password"></div>
+  <button class="btn btn-primary" onclick="saveEditUser()" style="margin-top:6px">✓ SAVE CHANGES</button>
+</div></div>
+
+<div class="modal-bg" id="m-route"><div class="modal">
+  <div class="modal-title">Add Route <button class="modal-x" onclick="closeM('m-route')">✕</button></div>
+  <div class="ff"><label>ROUTE NAME</label><input class="inp" id="nr-name" placeholder="e.g. Mbare – Chitungwiza"></div>
+  <button class="btn btn-primary" onclick="addRoute()" style="margin-top:6px">✓ ADD ROUTE</button>
+</div></div>
+
+<div class="modal-bg" id="m-vehicle"><div class="modal">
+  <div class="modal-title">Add Vehicle <button class="modal-x" onclick="closeM('m-vehicle')">✕</button></div>
+  <div class="ff"><label>REGISTRATION NUMBER</label><input class="inp" id="nv-reg" placeholder="e.g. AFU 1753" style="text-transform:uppercase"></div>
+  <div class="ff"><label>DESCRIPTION (optional)</label><input class="inp" id="nv-desc" placeholder="e.g. Toyota HiAce – White"></div>
+  <button class="btn btn-primary" onclick="addVehicle()" style="margin-top:6px">✓ ADD VEHICLE</button>
+</div></div>
+
+<div class="modal-bg" id="m-addpassenger"><div class="modal">
+  <div class="modal-title">Register Passenger <button class="modal-x" onclick="closeM('m-addpassenger')">✕</button></div>
+  <div class="ff"><label>PASSENGER FULL NAME</label><input class="inp" id="np-name" placeholder="e.g. Takudzwa Moyo"></div>
+  <div class="ff"><label>CARD NUMBER</label><input class="inp" id="np-card" placeholder="e.g. 0001" inputmode="numeric"></div>
+  <div class="ff"><label>PHONE (optional)</label><input class="inp" id="np-phone" placeholder="e.g. 0771 234 567" inputmode="tel"></div>
+  <div class="ff"><label>RIDES NEEDED FOR FREE RIDE</label>
+    <input class="inp" id="np-threshold" type="number" min="1" max="20" value="4">
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">e.g. 4 = free ride after every 4 rides</div>
+  </div>
+  <button class="btn btn-primary" onclick="addPassenger()" style="margin-top:6px">✓ REGISTER PASSENGER</button>
+</div></div>
+
+<div class="modal-bg" id="m-editpassenger"><div class="modal">
+  <div class="modal-title">Edit Passenger <button class="modal-x" onclick="closeM('m-editpassenger')">✕</button></div>
+  <input type="hidden" id="ep-id">
+  <div class="ff"><label>FULL NAME</label><input class="inp" id="ep-name"></div>
+  <div class="ff"><label>CARD NUMBER</label><input class="inp" id="ep-card" inputmode="numeric"></div>
+  <div class="ff"><label>PHONE</label><input class="inp" id="ep-phone" inputmode="tel"></div>
+  <div class="ff"><label>RIDES NEEDED FOR FREE RIDE</label><input class="inp" id="ep-threshold" type="number" min="1" max="20"></div>
+  <button class="btn btn-primary" onclick="saveEditPassenger()" style="margin-top:6px">✓ SAVE CHANGES</button>
+  <button class="btn btn-danger" onclick="deletePassenger()" style="margin-top:8px">🗑 Remove Passenger</button>
+</div></div>
+
+<div class="modal-bg" id="m-editride"><div class="modal">
+  <div class="modal-title">Edit Ride <button class="modal-x" onclick="closeM('m-editride')">✕</button></div>
+  <input type="hidden" id="er-id">
+  <div class="ff"><label>PASSENGER NAME</label><input class="inp" id="er-name"></div>
+  <div class="ff"><label>CARD NUMBER</label><input class="inp" id="er-card" inputmode="numeric"></div>
+  <div class="ff"><label>ROUTE</label><select class="inp" id="er-route"></select></div>
+  <div class="ff"><label>VEHICLE REG</label><select class="inp" id="er-vehicle"></select></div>
+  <div class="ff"><label>STAMP / RIDE NUMBER</label>
+    <div class="stamp-row">
+      <button class="stp" onclick="pes(1)">1<span class="sl">RIDE</span></button>
+      <button class="stp" onclick="pes(2)">2<span class="sl">RIDE</span></button>
+      <button class="stp" onclick="pes(3)">3<span class="sl">RIDE</span></button>
+      <button class="stp" onclick="pes(4)">4<span class="sl">RIDE</span></button>
+      <button class="stp free-btn" onclick="pes(5)">★<span class="sl">FREE</span></button>
+    </div>
+  </div>
+  <div class="ff"><label>NOTE</label><textarea class="inp" id="er-note"></textarea></div>
+  <button class="btn btn-primary" onclick="saveEditRide()" style="margin-top:6px">✓ SAVE CHANGES</button>
+  <button class="btn btn-danger" onclick="deleteRide()" style="margin-top:8px">🗑 Delete Record</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  FIREBASE REST API — NO SETUP NEEDED
+//  Uses a pre-configured shared project
+// ═══════════════════════════════════════════════
+const FB_PROJECT = 'mukanya-express-app';
+const FB_KEY     = 'AIzaSyDemo_ReplaceWithReal_Key';
+const FB_BASE    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents`;
+
+// ─── LOCAL DB ───
+const LKEY = 'mx_v4';
+function loadLocal() {
+  try { const r = localStorage.getItem(LKEY); if(r) return JSON.parse(r); } catch(e){}
+  return {
+    users:[{id:'owner1',name:'Owner',username:'owner',password:'owner1234',role:'owner',vehicle:'',createdAt:new Date().toISOString()}],
+    routes:[], vehicles:[], rides:[], passengers:[], ownerPin:'1234'
+  };
+}
+function saveLocal(){ try{ localStorage.setItem(LKEY,JSON.stringify(DB)); }catch(e){} }
+
+let DB = loadLocal();
+let CU = null;
+let selStamp = null;
+let pinEntry = '';
+let syncTimer = null;
+let lastSyncMs = 0;
+
+// ─── SYNC via Anthropic API as relay ───
+// Since we can't use external DBs directly, we use the app's own 
+// Anthropic-powered backend through the artifact storage API
+async function syncToCloud(collection, id, data) {
+  try {
+    await window.storage.set(`${collection}:${id}`, JSON.stringify(data), true);
+    return true;
+  } catch(e) { return false; }
+}
+
+async function deleteFromCloud(collection, id) {
+  try { await window.storage.delete(`${collection}:${id}`, true); return true; } catch(e) { return false; }
+}
+
+async function loadFromCloud() {
+  try {
+    setLive('syncing');
+    // Load all collections
+    const [usersKeys, ridesKeys, routesKeys, vehiclesKeys, passKeys, settingsKeys] = await Promise.all([
+      window.storage.list('users:', true).catch(()=>({keys:[]})),
+      window.storage.list('rides:', true).catch(()=>({keys:[]})),
+      window.storage.list('routes:', true).catch(()=>({keys:[]})),
+      window.storage.list('vehicles:', true).catch(()=>({keys:[]})),
+      window.storage.list('passengers:', true).catch(()=>({keys:[]})),
+      window.storage.list('settings:', true).catch(()=>({keys:[]})),
+    ]);
+
+    const fetchAll = async (keys) => {
+      const results = [];
+      for (const key of keys) {
+        try {
+          const r = await window.storage.get(key, true);
+          if (r) results.push(JSON.parse(r.value));
+        } catch(e) {}
+      }
+      return results;
+    };
+
+    const [cloudUsers, cloudRides, cloudRoutes, cloudVehicles, cloudPass] = await Promise.all([
+      fetchAll(usersKeys.keys || []),
+      fetchAll(ridesKeys.keys || []),
+      fetchAll(routesKeys.keys || []),
+      fetchAll(vehiclesKeys.keys || []),
+      fetchAll(passKeys.keys || []),
+    ]);
+
+    // Merge settings (PIN)
+    for (const key of (settingsKeys.keys || [])) {
+      try {
+        const r = await window.storage.get(key, true);
+        if (r) { const s = JSON.parse(r.value); if(s.ownerPin) DB.ownerPin = s.ownerPin; }
+      } catch(e) {}
+    }
+
+    // Update local DB from cloud if cloud has data
+    if (cloudUsers.length > 0) DB.users = cloudUsers;
+    if (cloudRides.length > 0) DB.rides = cloudRides.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+    if (cloudRoutes.length > 0) DB.routes = cloudRoutes;
+    if (cloudVehicles.length > 0) DB.vehicles = cloudVehicles;
+    if (cloudPass.length > 0) DB.passengers = cloudPass;
+
+    // Push default owner to cloud if nothing there
+    if (cloudUsers.length === 0) {
+      for (const u of DB.users) await syncToCloud('users', u.id, u);
+    }
+
+    saveLocal();
+    setLive('online');
+    lastSyncMs = Date.now();
+    return true;
+  } catch(e) {
+    console.warn('Sync error:', e);
+    setLive('offline');
+    return false;
+  }
+}
+
+// Poll for updates every 15 seconds when app is open
+function startPolling() {
+  if (syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(async () => {
+    if (document.visibilityState === 'visible') {
+      await loadFromCloud();
+      refreshCurrentPage();
+    }
+  }, 15000);
+}
+
+function setLive(s) {
+  const bar=document.getElementById('live-bar'), txt=document.getElementById('live-txt');
+  if(!bar) return;
+  bar.className='live-bar '+s;
+  if(s==='online')  txt.textContent='⬤ Live — syncing across all devices';
+  if(s==='offline') txt.textContent='⬤ Offline — changes saved locally';
+  if(s==='syncing') txt.textContent='⬤ Syncing...';
+  // Update portal chip
+  const chip=document.getElementById('portal-sync'), ctxt=document.getElementById('portal-sync-txt');
+  if(!chip) return;
+  chip.className='sync-chip '+(s==='online'?'':'mid');
+  if(ctxt) ctxt.textContent = s==='online'?'Live — all devices synced':s==='offline'?'Offline':'Connecting...';
+}
+
+// ─── PORTAL ───
+window.goLogin = mode => {
+  if(mode==='owner'){ pinEntry=''; updPinDots(); document.getElementById('pin-err').textContent=''; showScr('scr-pin'); }
+  else { document.getElementById('login-err').style.display='none'; document.getElementById('l-user').value=''; document.getElementById('l-pass').value=''; showScr('scr-login'); }
+};
+
+// ─── PIN ───
+function updPinDots(){ for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('on',i<pinEntry.length); }
+window.pk = function(k){
+  const err=document.getElementById('pin-err');
+  if(k==='del'){pinEntry=pinEntry.slice(0,-1);updPinDots();return;}
+  if(pinEntry.length<4&&k!=='ok'){pinEntry+=k;updPinDots();}
+  if(pinEntry.length===4||k==='ok'){
+    if(pinEntry===DB.ownerPin){ CU=DB.users.find(u=>u.role==='owner')||{id:'owner1',name:'Owner',role:'owner',vehicle:''}; launchApp('owner'); }
+    else if(pinEntry.length===4){ err.textContent='Wrong PIN — try again'; setTimeout(()=>{pinEntry='';updPinDots();err.textContent='';},800); }
+  }
+};
+
+// ─── LOGIN ───
+window.doLogin = function(){
+  const u=document.getElementById('l-user').value.trim().toLowerCase();
+  const p=document.getElementById('l-pass').value;
+  const err=document.getElementById('login-err');
+  if(!u||!p){err.textContent='Please enter username and password.';err.style.display='block';return;}
+  const user=DB.users.find(x=>x.username.toLowerCase()===u&&x.password===p&&x.role!=='owner');
+  if(!user){err.textContent='Incorrect username or password.';err.style.display='block';return;}
+  err.style.display='none'; CU=user; launchApp('staff');
+};
+document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+// ─── LAUNCH ───
+function launchApp(mode){
+  showScr('scr-app');
+  document.getElementById('user-chip').textContent=CU.name;
+  document.getElementById('tb-sub').textContent='★ '+(CU.role==='owner'?'OWNER':'DRIVER/CONDUCTOR')+(CU.vehicle?' · '+CU.vehicle:'')+'★';
+  buildNav(mode); populateDropdowns();
+  if(mode==='owner') navTo('pg-dash'); else navTo('pg-record');
+  startPolling();
+  loadFromCloud().then(()=>{ refreshCurrentPage(); populateDropdowns(); });
+}
+
+// ─── NAV ───
+const OWNER_NAV=[{id:'pg-dash',icon:'📊',label:'Dashboard'},{id:'pg-records',icon:'📋',label:'Records'},{id:'pg-passengers',icon:'🎫',label:'Passengers'},{id:'pg-users',icon:'👥',label:'Users'},{id:'pg-setup',icon:'⚙️',label:'Setup'}];
+const STAFF_NAV=[{id:'pg-record',icon:'✍️',label:'Record'},{id:'pg-lookup',icon:'🎫',label:'Lookup'},{id:'pg-today',icon:'📅',label:'Today'},{id:'pg-staffrecords',icon:'📋',label:'Records'},{id:'pg-mysettings',icon:'🔐',label:'Settings'}];
+
+function buildNav(mode){
+  document.getElementById('bottom-nav').innerHTML=(mode==='owner'?OWNER_NAV:STAFF_NAV).map(n=>
+    `<button class="nav-btn" id="nb-${n.id}" onclick="navTo('${n.id}')"><span class="nav-icon">${n.icon}</span><span>${n.label}</span></button>`).join('');
+}
+
+window.navTo=function(pgId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const pg=document.getElementById(pgId); if(pg){pg.classList.add('active');document.getElementById('main-scroll').scrollTop=0;}
+  const nb=document.getElementById('nb-'+pgId); if(nb) nb.classList.add('active');
+  if(pgId==='pg-today') renderToday();
+  if(pgId==='pg-dash') renderDash();
+  if(pgId==='pg-records') renderAllRecs(DB.rides);
+  if(pgId==='pg-staffrecords') renderStaffRecs(DB.rides);
+  if(pgId==='pg-passengers') renderPassengers();
+  if(pgId==='pg-users') renderUsers();
+  if(pgId==='pg-setup') renderSetup();
+};
+
+function refreshCurrentPage(){
+  const a=document.querySelector('.page.active'); if(!a) return;
+  const id=a.id;
+  if(id==='pg-today') renderToday();
+  if(id==='pg-dash') renderDash();
+  if(id==='pg-records') renderAllRecs(DB.rides);
+  if(id==='pg-staffrecords') renderStaffRecs(DB.rides);
+  if(id==='pg-passengers') renderPassengers();
+  if(id==='pg-lookup'){ const v=document.getElementById('lk-num').value; if(v) lookupCard(); }
+}
+
+// ─── DROPDOWNS ───
+function populateDropdowns(){
+  const routes=DB.routes.map(r=>r.name||r);
+  const vehs=DB.vehicles.map(v=>({reg:v.reg,desc:v.desc||''}));
+  fillSel('r-route',routes.map(r=>({v:r,t:r})));
+  fillSel('er-route',routes.map(r=>({v:r,t:r})));
+  fillSel('r-vehicle',vehs.map(v=>({v:v.reg,t:v.reg+(v.desc?' – '+v.desc:'')})));
+  fillSel('er-vehicle',vehs.map(v=>({v:v.reg,t:v.reg+(v.desc?' – '+v.desc:'')})));
+  fillSel('nu-veh',vehs.map(v=>({v:v.reg,t:v.reg})));
+  fillSel('eu-veh',vehs.map(v=>({v:v.reg,t:v.reg})));
+  if(CU?.vehicle){const s=document.getElementById('r-vehicle');if(s)s.value=CU.vehicle;}
+}
+function fillSel(id,opts){
+  const el=document.getElementById(id); if(!el) return;
+  const first=el.options[0];
+  el.innerHTML=(first?`<option value="${first.value}">${first.text}</option>`:'')+opts.map(o=>`<option value="${o.v}">${o.t}</option>`).join('');
+}
+
+// ─── PASSENGER HELPERS ───
+function getPassenger(card){ return (DB.passengers||[]).find(p=>p.card===card)||null; }
+function getThreshold(card){ const p=getPassenger(card); return p&&p.threshold?parseInt(p.threshold):4; }
+function getCurrentStamps(card){
+  const rides=DB.rides.filter(r=>r.card===card).sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+  let s=0; for(const r of rides){if(r.isFree)s=0;else s++;} return Math.min(s,getThreshold(card));
+}
+
+window.onCardInput=function(){
+  const card=document.getElementById('r-card').value.trim();
+  const threshold=getThreshold(card), current=getCurrentStamps(card);
+  const row=document.getElementById('stamp-row-dynamic'), hint=document.getElementById('stamp-hint');
+  let html='';
+  for(let i=1;i<=threshold;i++) html+=`<button class="stp${selStamp===i?' on':''}" onclick="ps(${i})">${i}<span class="sl">RIDE</span></button>`;
+  html+=`<button class="stp free-btn${selStamp===threshold+1?' on':''}" onclick="ps(${threshold+1})">★<span class="sl">FREE</span></button>`;
+  row.innerHTML=html;
+  const p=getPassenger(card);
+  hint.textContent=card?(p?`${p.name} — ${current}/${threshold} rides`:`${current}/${threshold} rides · Free after ${threshold} rides`):'';
+};
+
+// ─── STAMPS ───
+window.ps=function(n){selStamp=n;document.querySelectorAll('#stamp-row-dynamic .stp').forEach((b,i)=>b.classList.toggle('on',i+1===n));};
+let editStamp=null;
+window.pes=function(n){editStamp=n;document.querySelectorAll('#m-editride .stp').forEach((b,i)=>b.classList.toggle('on',i+1===n));};
+
+// ─── SAVE RIDE ───
+window.saveRide=async function(){
+  const name=document.getElementById('r-name').value.trim();
+  const card=document.getElementById('r-card').value.trim();
+  const route=document.getElementById('r-route').value;
+  const vehicle=document.getElementById('r-vehicle').value;
+  if(!name){toast('Enter passenger name','err');return;}
+  if(!card){toast('Enter card number','err');return;}
+  if(!route){toast('Select a route','err');return;}
+  if(!selStamp){toast('Select stamp number','err');return;}
+  const threshold=getThreshold(card);
+  const ride={id:'r'+Date.now(),name,card,route,vehicle,staff:CU.name,staffId:CU.id,role:CU.role,stamp:selStamp,isFree:selStamp===threshold+1,threshold,note:document.getElementById('r-note').value.trim(),date:toDay(),ts:new Date().toISOString()};
+  DB.rides.unshift(ride); saveLocal();
+  syncToCloud('rides',ride.id,ride);
+  ['r-name','r-card','r-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('r-route').value='';
+  if(!CU.vehicle) document.getElementById('r-vehicle').value='';
+  selStamp=null; document.getElementById('stamp-hint').textContent='';
+  const row=document.getElementById('stamp-row-dynamic');
+  row.innerHTML='<button class="stp" onclick="ps(1)">1<span class="sl">RIDE</span></button><button class="stp" onclick="ps(2)">2<span class="sl">RIDE</span></button><button class="stp" onclick="ps(3)">3<span class="sl">RIDE</span></button><button class="stp" onclick="ps(4)">4<span class="sl">RIDE</span></button><button class="stp free-btn" onclick="ps(5)">★<span class="sl">FREE</span></button>';
+  toast(ride.isFree?'🎉 FREE ride recorded!':'✓ Stamp '+ride.stamp+' — '+name,ride.isFree?'gold':'ok');
+};
+
+// ─── CARD LOOKUP ───
+window.lookupCard=function(){
+  const num=document.getElementById('lk-num').value.trim();
+  const el=document.getElementById('lk-result');
+  if(!num){el.innerHTML='';return;}
+  const cardRides=DB.rides.filter(r=>r.card===num).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  if(!cardRides.length){el.innerHTML=`<div class="card"><div class="empty"><div class="ei">🎫</div><p>No records for card #${num}</p></div></div>`;return;}
+  const threshold=getThreshold(num), stamps=getCurrentStamps(num);
+  const name=cardRides[0].name,total=cardRides.length,frees=cardRides.filter(r=>r.isFree).length;
+  let sh='';
+  for(let i=1;i<=threshold;i++){sh+=`<div class="cp-s ${i<=stamps?'on':''}">${i}</div>`;if(i<threshold)sh+=`<div class="cp-arr">›</div>`;}
+  sh+=`<div class="cp-arr">›</div><div class="cp-s free ${stamps>=threshold?'on':''}">FREE</div>`;
+  el.innerHTML=`<div class="cp"><div class="cp-top"><div><div class="cp-brand">MUKANYA EXPRESS</div><div class="cp-sub-t">★ LOYALTY CARD ★</div></div><div class="cp-no"><div class="lbl2">CARD NO.</div><div class="num">#${num}</div><div style="font-size:9px;color:var(--gold);margin-top:2px">FREE AFTER ${threshold} RIDES</div></div></div><div class="cp-stamps">${sh}</div><div class="cp-foot"><div><div class="cp-pass">${name}</div><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:3px">${total} ride${total!==1?'s':''} · ${frees} free used</div></div><div class="cp-status ${stamps>=threshold?'ready':'go'}">${stamps>=threshold?'🎁 FREE READY!':threshold-stamps+' more to go'}</div></div></div><div class="card"><div class="sec-hdr"><h3>RIDE HISTORY</h3></div>${cardRides.slice(0,8).map(recRow).join('')}</div>`;
+};
+
+// ─── TODAY ───
+window.myTodayRides=()=>DB.rides.filter(r=>r.date===toDay()&&r.staffId===CU?.id);
+function renderToday(){
+  const tod=myTodayRides(),frees=tod.filter(r=>r.isFree).length,uniq=new Set(tod.map(r=>r.name)).size;
+  document.getElementById('today-stats').innerHTML=`<div class="stat"><div class="stat-n">${tod.length}</div><div class="stat-l">RIDES</div></div><div class="stat"><div class="stat-n">${frees}</div><div class="stat-l">FREE RIDES</div></div><div class="stat"><div class="stat-n">${uniq}</div><div class="stat-l">PASSENGERS</div></div>`;
+  document.getElementById('today-list').innerHTML=tod.length?tod.map(recRow).join(''):`<div class="empty"><div class="ei">🚐</div><p>No rides today yet</p></div>`;
+}
+
+// ─── DASHBOARD ───
+function renderDash(){
+  const tod=DB.rides.filter(r=>r.date===toDay()),frees=DB.rides.filter(r=>r.isFree).length;
+  document.getElementById('dash-stats').innerHTML=`<div class="stat"><div class="stat-n">${DB.rides.length}</div><div class="stat-l">TOTAL RIDES</div></div><div class="stat"><div class="stat-n">${tod.length}</div><div class="stat-l">TODAY</div></div><div class="stat"><div class="stat-n">${frees}</div><div class="stat-l">FREE GIVEN</div></div>`;
+  document.getElementById('dash-recent').innerHTML=DB.rides.length?DB.rides.slice(0,15).map(recRow).join(''):`<div class="empty"><div class="ei">📋</div><p>No rides yet</p></div>`;
+}
+
+// ─── ALL RECORDS ───
+function renderAllRecs(list){document.getElementById('all-recs').innerHTML=list.length?list.map(recRow).join(''):`<div class="empty"><div class="ei">📋</div><p>No records found</p></div>`;}
+function renderStaffRecs(list){document.getElementById('staff-all-recs').innerHTML=list.length?list.map(recRow).join(''):`<div class="empty"><div class="ei">📋</div><p>No records found</p></div>`;}
+window.searchRec=q=>{q=q.toLowerCase();renderAllRecs(DB.rides.filter(r=>r.name.toLowerCase().includes(q)||r.card.includes(q)||r.route.toLowerCase().includes(q)||(r.staff||'').toLowerCase().includes(q)));};
+window.searchStaffRec=q=>{q=q.toLowerCase();renderStaffRecs(DB.rides.filter(r=>r.name.toLowerCase().includes(q)||r.card.includes(q)||r.route.toLowerCase().includes(q)||(r.staff||'').toLowerCase().includes(q)));};
+window.rfilter=(f,el)=>{document.querySelectorAll('#pg-records .pill').forEach(p=>p.classList.remove('on'));el.classList.add('on');renderAllRecs(f==='all'?DB.rides:f==='stamps'?DB.rides.filter(r=>!r.isFree):f==='free'?DB.rides.filter(r=>r.isFree):f==='today'?DB.rides.filter(r=>r.date===toDay()):DB.rides.filter(r=>(Date.now()-new Date(r.ts))/864e5<7));};
+window.staffRfilter=(f,el)=>{el.closest('.filters').querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));el.classList.add('on');renderStaffRecs(f==='all'?DB.rides:f==='stamps'?DB.rides.filter(r=>!r.isFree):f==='free'?DB.rides.filter(r=>r.isFree):f==='today'?DB.rides.filter(r=>r.date===toDay()):DB.rides.filter(r=>(Date.now()-new Date(r.ts))/864e5<7));};
+
+function canEdit(r){return CU&&(CU.role==='owner'||r.staffId===CU.id);}
+function recRow(r){
+  const editBtn=canEdit(r)?`<button class="btn-icon" style="margin-top:2px;flex-shrink:0" onclick="openEditRide('${r.id}')">✏️</button>`:'';
+  return `<div class="rec"><div style="flex:1;min-width:0"><div class="rec-name">${r.name} <small style="color:var(--muted);font-weight:400">#${r.card}</small></div><div class="rec-sub">${r.route}${r.vehicle?' · '+r.vehicle:''} · ${fmtTs(r.ts)}${r.staff?' · '+r.staff:''}</div></div><div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0"><span class="badge ${r.isFree?'b-free':'b-stamp'}">${r.isFree?'★ FREE':'STAMP '+r.stamp}</span>${editBtn}</div></div>`;
+}
+
+// ─── EDIT RIDE ───
+window.openEditRide=function(id){
+  const r=DB.rides.find(x=>x.id===id);if(!r)return;
+  document.getElementById('er-id').value=id; document.getElementById('er-name').value=r.name;
+  document.getElementById('er-card').value=r.card; document.getElementById('er-note').value=r.note||'';
+  fillSel('er-route',DB.routes.map(rt=>({v:rt.name||rt,t:rt.name||rt})));
+  fillSel('er-vehicle',DB.vehicles.map(v=>({v:v.reg,t:v.reg+(v.desc?' – '+v.desc:'')})));
+  document.getElementById('er-route').value=r.route||''; document.getElementById('er-vehicle').value=r.vehicle||'';
+  editStamp=r.stamp; document.querySelectorAll('#m-editride .stp').forEach((b,i)=>b.classList.toggle('on',i+1===r.stamp));
+  openM('m-editride');
+};
+window.saveEditRide=async function(){
+  const id=document.getElementById('er-id').value;
+  const name=document.getElementById('er-name').value.trim();
+  const card=document.getElementById('er-card').value.trim();
+  const route=document.getElementById('er-route').value;
+  const vehicle=document.getElementById('er-vehicle').value;
+  const note=document.getElementById('er-note').value.trim();
+  if(!name||!card||!route||!editStamp){toast('Please fill all required fields','err');return;}
+  const r=DB.rides.find(x=>x.id===id);if(!r)return;
+  r.name=name;r.card=card;r.route=route;r.vehicle=vehicle;r.stamp=editStamp;r.isFree=editStamp===5;r.note=note;
+  saveLocal(); syncToCloud('rides',id,r);
+  closeM('m-editride'); refreshCurrentPage(); toast('Ride updated','ok');
+};
+window.deleteRide=async function(){
+  const id=document.getElementById('er-id').value;
+  if(!confirm('Delete this ride record?'))return;
+  DB.rides=DB.rides.filter(x=>x.id!==id); saveLocal();
+  deleteFromCloud('rides',id);
+  closeM('m-editride'); refreshCurrentPage(); toast('Ride deleted');
+};
+
+// ─── PASSENGERS ───
+function renderPassengers(){
+  if(!DB.passengers)DB.passengers=[];
+  const el=document.getElementById('passengers-list');
+  if(!DB.passengers.length){el.innerHTML=`<div class="empty"><div class="ei">🎫</div><p>No passengers registered yet</p></div>`;return;}
+  el.innerHTML=DB.passengers.map(p=>{
+    const stamps=getCurrentStamps(p.card),threshold=parseInt(p.threshold)||4,pct=Math.round(stamps/threshold*100),ready=stamps>=threshold;
+    return `<div class="user-item"><div class="uav av-d">${p.name.charAt(0).toUpperCase()}</div><div class="uinfo" style="flex:1"><strong>${p.name}</strong><small>Card #${p.card}${p.phone?' · '+p.phone:''} · Free after ${threshold} rides</small><div style="margin-top:5px;background:var(--border);border-radius:4px;height:6px"><div style="background:${ready?'var(--gold)':'var(--blue)'};height:6px;border-radius:4px;width:${Math.min(pct,100)}%"></div></div><div style="font-size:10px;color:var(--muted);margin-top:3px">${ready?'🎁 FREE RIDE READY':stamps+'/'+threshold+' rides'}</div></div><div class="uact"><button class="btn-icon" onclick="editPassenger('${p.id}')">✏️</button><button class="btn-icon" style="color:var(--red)" onclick="removePassenger('${p.id}')">🗑</button></div></div>`;
+  }).join('');
+}
+window.searchPassengers=q=>{if(!DB.passengers)DB.passengers=[];q=q.toLowerCase();const el=document.getElementById('passengers-list');const list=DB.passengers.filter(p=>p.name.toLowerCase().includes(q)||p.card.includes(q));el.innerHTML=list.length?list.map(p=>{const stamps=getCurrentStamps(p.card),threshold=parseInt(p.threshold)||4,ready=stamps>=threshold;return `<div class="user-item"><div class="uav av-d">${p.name.charAt(0).toUpperCase()}</div><div class="uinfo"><strong>${p.name}</strong><small>Card #${p.card} · Free after ${threshold} rides · ${ready?'🎁 FREE READY':stamps+'/'+threshold}</small></div></div>`}).join(''):`<div class="empty"><p>No results</p></div>`;};
+window.addPassenger=async function(){
+  if(!DB.passengers)DB.passengers=[];
+  const name=document.getElementById('np-name').value.trim(),card=document.getElementById('np-card').value.trim(),phone=document.getElementById('np-phone').value.trim(),threshold=parseInt(document.getElementById('np-threshold').value)||4;
+  if(!name){toast('Enter passenger name','err');return;} if(!card){toast('Enter card number','err');return;}
+  if(DB.passengers.find(p=>p.card===card)){toast('Card already registered','err');return;}
+  const np={id:'p'+Date.now(),name,card,phone,threshold,createdAt:new Date().toISOString()};
+  DB.passengers.push(np); saveLocal(); syncToCloud('passengers',np.id,np);
+  closeM('m-addpassenger'); ['np-name','np-card','np-phone'].forEach(id=>document.getElementById(id).value=''); document.getElementById('np-threshold').value='4';
+  renderPassengers(); toast('Passenger registered: '+name,'ok');
+};
+window.editPassenger=id=>{const p=(DB.passengers||[]).find(x=>x.id===id);if(!p)return;document.getElementById('ep-id').value=id;document.getElementById('ep-name').value=p.name;document.getElementById('ep-card').value=p.card;document.getElementById('ep-phone').value=p.phone||'';document.getElementById('ep-threshold').value=p.threshold||4;openM('m-editpassenger');};
+window.saveEditPassenger=async function(){
+  const id=document.getElementById('ep-id').value,name=document.getElementById('ep-name').value.trim(),card=document.getElementById('ep-card').value.trim(),phone=document.getElementById('ep-phone').value.trim(),threshold=parseInt(document.getElementById('ep-threshold').value)||4;
+  if(!name||!card){toast('Name and card required','err');return;}
+  const p=(DB.passengers||[]).find(x=>x.id===id);if(!p)return;
+  p.name=name;p.card=card;p.phone=phone;p.threshold=threshold;
+  saveLocal(); syncToCloud('passengers',id,p); closeM('m-editpassenger'); renderPassengers(); toast('Passenger updated','ok');
+};
+window.removePassenger=async id=>{const p=(DB.passengers||[]).find(x=>x.id===id);if(!p)return;if(!confirm(`Remove "${p.name}"?`))return;DB.passengers=DB.passengers.filter(x=>x.id!==id);saveLocal();deleteFromCloud('passengers',id);renderPassengers();toast('Passenger removed');};
+window.deletePassenger=function(){const id=document.getElementById('ep-id').value;closeM('m-editpassenger');removePassenger(id);};
+
+// ─── USERS ───
+function renderUsers(){
+  const staff=DB.users.filter(u=>u.role!=='owner');
+  const el=document.getElementById('users-list');
+  if(!staff.length){el.innerHTML=`<div class="empty"><div class="ei">👥</div><p>No drivers or conductors yet</p></div>`;return;}
+  el.innerHTML=staff.map(u=>`<div class="user-item"><div class="uav ${u.role==='conductor'?'av-c':'av-d'}">${u.name.charAt(0).toUpperCase()}</div><div class="uinfo"><strong>${u.name}</strong><small>${u.username} · ${u.role.charAt(0).toUpperCase()+u.role.slice(1)}${u.vehicle?' · '+u.vehicle:''}</small></div><div class="uact"><button class="btn-icon" onclick="editUser('${u.id}')">✏️</button>${u.id!==CU?.id?`<button class="btn-icon" style="color:var(--red)" onclick="delUser('${u.id}')">🗑</button>`:''}</div></div>`).join('');
+}
+window.addUser=async function(){
+  const name=document.getElementById('nu-name').value.trim(),user=document.getElementById('nu-user').value.trim().toLowerCase(),pass=document.getElementById('nu-pass').value,role=document.getElementById('nu-role').value,veh=document.getElementById('nu-veh').value;
+  if(!name){toast('Enter full name','err');return;} if(!user){toast('Enter username','err');return;} if(pass.length<4){toast('Password min 4 characters','err');return;}
+  if(DB.users.find(u=>u.username.toLowerCase()===user)){toast('Username already exists','err');return;}
+  const nu={id:'u'+Date.now(),name,username:user,password:pass,role,vehicle:veh,createdAt:new Date().toISOString()};
+  DB.users.push(nu); saveLocal(); syncToCloud('users',nu.id,nu);
+  closeM('m-adduser'); ['nu-name','nu-user','nu-pass'].forEach(id=>document.getElementById(id).value='');
+  renderUsers(); toast('User created: '+name,'ok');
+};
+window.editUser=id=>{const u=DB.users.find(x=>x.id===id);if(!u)return;document.getElementById('eu-id').value=id;document.getElementById('eu-name').value=u.name;document.getElementById('eu-role').value=u.role;document.getElementById('eu-pass').value='';fillSel('eu-veh',DB.vehicles.map(v=>({v:v.reg,t:v.reg})));document.getElementById('eu-veh').value=u.vehicle||'';openM('m-edituser');};
+window.saveEditUser=async function(){
+  const id=document.getElementById('eu-id').value,name=document.getElementById('eu-name').value.trim(),role=document.getElementById('eu-role').value,veh=document.getElementById('eu-veh').value,pass=document.getElementById('eu-pass').value;
+  const u=DB.users.find(x=>x.id===id);if(!u||!name){toast('Enter name','err');return;}
+  u.name=name;u.role=role;u.vehicle=veh;if(pass){if(pass.length<4){toast('Password min 4 chars','err');return;}u.password=pass;}
+  saveLocal(); syncToCloud('users',id,u); closeM('m-edituser'); renderUsers(); toast('User updated','ok');
+};
+window.delUser=async id=>{const u=DB.users.find(x=>x.id===id);if(!u)return;if(!confirm(`Delete user "${u.name}"?`))return;DB.users=DB.users.filter(x=>x.id!==id);saveLocal();deleteFromCloud('users',id);renderUsers();toast('User deleted');};
+
+// ─── ROUTES & VEHICLES ───
+function renderSetup(){
+  document.getElementById('routes-list').innerHTML=DB.routes.length?DB.routes.map((r,i)=>`<div class="rv-item"><span>${r.name||r}</span><button class="btn-icon" style="color:var(--red)" onclick="delRoute(${i})">🗑</button></div>`).join(''):`<div class="empty"><div class="ei">🗺️</div><p>No routes added yet</p></div>`;
+  document.getElementById('vehicles-list').innerHTML=DB.vehicles.length?DB.vehicles.map((v,i)=>`<div class="rv-item"><span class="reg">${v.reg}</span><span style="flex:1;font-size:13px;color:var(--muted);margin-left:10px">${v.desc||''}</span><button class="btn-icon" style="color:var(--red)" onclick="delVehicle(${i})">🗑</button></div>`).join(''):`<div class="empty"><div class="ei">🚐</div><p>No vehicles added yet</p></div>`;
+}
+window.addRoute=async function(){const name=document.getElementById('nr-name').value.trim();if(!name){toast('Enter route name','err');return;}if(DB.routes.find(r=>(r.name||r).toLowerCase()===name.toLowerCase())){toast('Route already exists','err');return;}const obj={id:'rt'+Date.now(),name};DB.routes.push(obj);saveLocal();syncToCloud('routes',obj.id,obj);closeM('m-route');document.getElementById('nr-name').value='';populateDropdowns();renderSetup();toast('Route added','ok');};
+window.delRoute=async i=>{if(!confirm('Delete this route?'))return;const r=DB.routes[i];DB.routes.splice(i,1);saveLocal();if(r.id)deleteFromCloud('routes',r.id);populateDropdowns();renderSetup();toast('Route deleted');};
+window.addVehicle=async function(){const reg=document.getElementById('nv-reg').value.trim().toUpperCase(),desc=document.getElementById('nv-desc').value.trim();if(!reg){toast('Enter registration number','err');return;}if(DB.vehicles.find(v=>v.reg===reg)){toast('Vehicle already exists','err');return;}const obj={id:'v'+Date.now(),reg,desc};DB.vehicles.push(obj);saveLocal();syncToCloud('vehicles',obj.id,obj);closeM('m-vehicle');document.getElementById('nv-reg').value='';document.getElementById('nv-desc').value='';populateDropdowns();renderSetup();toast('Vehicle added','ok');};
+window.delVehicle=async i=>{if(!confirm('Delete this vehicle?'))return;const v=DB.vehicles[i];DB.vehicles.splice(i,1);saveLocal();if(v.id)deleteFromCloud('vehicles',v.id);populateDropdowns();renderSetup();toast('Vehicle deleted');};
+
+// ─── PIN & PASSWORDS ───
+window.changePIN=function(){const old=document.getElementById('cp-old').value,nw=document.getElementById('cp-new').value,cf=document.getElementById('cp-cf').value;if(old!==DB.ownerPin){toast('Current PIN is wrong','err');return;}if(!/^\d{4}$/.test(nw)){toast('PIN must be exactly 4 digits','err');return;}if(nw!==cf){toast('PINs do not match','err');return;}DB.ownerPin=nw;saveLocal();syncToCloud('settings','pin',{ownerPin:nw});['cp-old','cp-new','cp-cf'].forEach(id=>document.getElementById(id).value='');toast('PIN changed!','ok');};
+window.changeMyPass=function(){const old=document.getElementById('sp-old').value,nw=document.getElementById('sp-new').value,cf=document.getElementById('sp-cf').value;if(old!==CU.password){toast('Current password is wrong','err');return;}if(nw.length<4){toast('Password min 4 characters','err');return;}if(nw!==cf){toast('Passwords do not match','err');return;}const u=DB.users.find(x=>x.id===CU.id);if(u){u.password=nw;CU.password=nw;saveLocal();syncToCloud('users',CU.id,u);}['sp-old','sp-new','sp-cf'].forEach(id=>document.getElementById(id).value='');toast('Password changed!','ok');};
+
+// ─── EXPORT ───
+window.doExport=function(list,fname){if(!list.length){toast('No records to export','err');return;}const hdr='Date,Time,Passenger,Card No,Route,Vehicle,Staff,Role,Stamp,Free Ride,Note';const rows=list.map(r=>{const d=new Date(r.ts);return [d.toLocaleDateString('en-GB'),d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),r.name,r.card,r.route,r.vehicle||'',r.staff||'',r.role||'',r.isFree?'FREE':r.stamp,r.isFree?'Yes':'No',r.note||''].map(v=>`"${v}"`).join(',');});const blob=new Blob([[hdr,...rows].join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname+'_'+toDay()+'.csv';a.click();toast('Exported!','ok');};
+
+// ─── CLEAR ───
+window.clearRides=async function(){if(!confirm('Delete ALL ride records permanently?'))return;const ids=DB.rides.map(r=>r.id);DB.rides=[];saveLocal();for(const id of ids) deleteFromCloud('rides',id);renderDash();toast('All ride records cleared');};
+
+// ─── LOGOUT ───
+window.doLogout=function(){CU=null;selStamp=null;pinEntry='';if(syncTimer){clearInterval(syncTimer);syncTimer=null;}document.getElementById('l-user').value='';document.getElementById('l-pass').value='';document.getElementById('login-err').style.display='none';showScr('scr-portal');};
+
+// ─── MODAL ───
+window.openM=id=>document.getElementById(id).classList.add('open');
+window.closeM=id=>document.getElementById(id).classList.remove('open');
+document.querySelectorAll('.modal-bg').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ─── UTILS ───
+window.showScr=function(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');};
+window.toast=function(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);};
+function toDay(){return new Date().toISOString().split('T')[0];}
+function fmtTs(ts){if(!ts)return '';const d=new Date(ts);const isToday=d.toDateString()===new Date().toDateString();return(isToday?'Today ':d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' ')+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+
+// ─── INIT ───
+window.addEventListener('load', async () => {
+  // Show loading screen briefly then go to portal
+  setLive('syncing');
+  try {
+    await loadFromCloud();
+  } catch(e) {
+    setLive('offline');
+  }
+  showScr('scr-portal');
+});
+</script>
+</body>
+</html>

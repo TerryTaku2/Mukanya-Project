@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mukanya Express – Loyalty System</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B1F5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mukanya">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0B1F5C;--blue:#1842B4;--blue2:#2356D4;
+  --gold:#F5C200;--gold-d:#C49A00;
+  --bg:#EEF2FF;--surface:#fff;--border:#D8E0F5;
+  --muted:#6B7BB8;--red:#DC2626;--green:#16a34a;
+  --r:14px;--shadow:0 2px 14px rgba(11,31,92,.10);--shadow-lg:0 8px 32px rgba(11,31,92,.18);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--navy);font-size:15px;display:flex;flex-direction:column}
+.screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.screen.active{display:flex}
+
+/* LOADING */
+#scr-loading{background:var(--navy);align-items:center;justify-content:center}
+.loading-wrap{display:flex;flex-direction:column;align-items:center;gap:20px}
+.spinner{width:48px;height:48px;border:4px solid rgba(245,194,0,.2);border-top:4px solid var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-wrap p{color:rgba(255,255,255,.6);font-size:14px;letter-spacing:.06em}
+.loading-wrap .logo-l{width:72px;height:72px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.loading-wrap .logo-l span{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--navy)}
+
+/* PORTAL */
+#scr-portal{background:var(--navy);align-items:center;justify-content:center;padding:24px}
+.portal-wrap{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center}
+.portal-logo{width:80px;height:80px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 4px 24px rgba(245,194,0,.35)}
+.portal-logo span{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:var(--navy)}
+.portal-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:#fff;letter-spacing:.05em;text-align:center;line-height:1.1}
+.portal-sub{font-size:11px;color:var(--gold);letter-spacing:.14em;margin:6px 0 36px;font-weight:600;text-align:center}
+.portal-cards{width:100%;display:flex;flex-direction:column;gap:12px}
+.portal-card{background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.14);border-radius:16px;padding:20px;cursor:pointer;display:flex;align-items:center;gap:16px;transition:.2s}
+.portal-card:hover{background:rgba(255,255,255,.12);border-color:var(--gold)}
+.portal-card:active{transform:scale(.97)}
+.pc-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.pc-owner{background:rgba(245,194,0,.18)}
+.pc-staff{background:rgba(24,66,180,.3)}
+.pc-info h3{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;letter-spacing:.04em;line-height:1.1}
+.pc-info p{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px}
+.sync-chip{display:flex;align-items:center;gap:6px;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:#4ade80;letter-spacing:.05em;margin-bottom:20px}
+.sync-chip.off{background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.3);color:#f87171}
+.sync-chip.mid{background:rgba(245,194,0,.15);border-color:rgba(245,194,0,.3);color:var(--gold)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+/* LOGIN */
+#scr-login{background:var(--navy);align-items:center;justify-content:center;padding:24px}
+.login-wrap{width:100%;max-width:380px}
+.login-back{color:rgba(255,255,255,.5);background:none;border:none;font-size:13px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;gap:6px;padding:0}
+.login-back:hover{color:var(--gold)}
+.login-header{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.login-icon{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.li-staff{background:rgba(24,66,180,.3)}
+.login-header h2{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:.04em}
+.login-header p{font-size:12px;color:rgba(255,255,255,.45);margin-top:3px}
+.lfield{margin-bottom:14px}
+.lfield label{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.1em;margin-bottom:6px}
+.lfield input{width:100%;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.14);border-radius:10px;padding:12px 14px;font-size:15px;color:#fff;font-family:'Barlow',sans-serif;outline:none;transition:.2s}
+.lfield input::placeholder{color:rgba(255,255,255,.25)}
+.lfield input:focus{border-color:var(--gold);background:rgba(255,255,255,.12)}
+.login-btn{width:100%;background:var(--gold);border:none;border-radius:12px;padding:14px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--navy);cursor:pointer;letter-spacing:.06em;transition:.15s;margin-top:4px}
+.login-btn:active{transform:scale(.97)}
+.login-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.login-err{background:rgba(220,38,38,.2);border:1px solid rgba(220,38,38,.4);border-radius:8px;padding:10px 14px;color:#FCA5A5;font-size:13px;margin-bottom:14px;display:none}
+
+/* PIN */
+#scr-pin{background:var(--navy);align-items:center;justify-content:center;padding:24px}
+.pin-wrap{width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center}
+.pin-back{align-self:flex-start;color:rgba(255,255,255,.5);background:none;border:none;font-size:13px;cursor:pointer;margin-bottom:24px;display:flex;align-items:center;gap:6px;padding:0}
+.pin-logo{width:64px;height:64px;background:rgba(245,194,0,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px}
+.pin-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:.04em}
+.pin-sub{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:24px;text-align:center}
+.pin-dots{display:flex;gap:12px;margin-bottom:28px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:transparent;transition:.2s}
+.pin-dot.on{background:var(--gold);border-color:var(--gold)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:240px}
+.pin-key{padding:18px;border-radius:12px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:#fff;cursor:pointer;text-align:center;transition:.15s}
+.pin-key:active{background:rgba(255,255,255,.16);transform:scale(.95)}
+.pin-key.del{font-size:16px;color:rgba(255,255,255,.5)}
+.pin-err{color:#FCA5A5;font-size:13px;margin-top:16px;min-height:20px;text-align:center}
+
+/* APP SHELL */
+#scr-app{flex-direction:column}
+.topbar{background:var(--navy);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-logo{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tb-logo span{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;color:var(--navy)}
+.tb-info h2{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#fff;letter-spacing:.04em;line-height:1.1}
+.tb-info p{font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.07em}
+.tb-right{display:flex;align-items:center;gap:7px}
+.user-chip{background:rgba(255,255,255,.1);border-radius:20px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,.85);font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-logout{background:rgba(255,255,255,.1);border:none;border-radius:8px;width:32px;height:32px;color:rgba(255,255,255,.6);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.live-bar{display:flex;align-items:center;justify-content:center;gap:6px;padding:5px;font-size:11px;font-weight:700;letter-spacing:.05em;flex-shrink:0}
+.live-bar.online{background:#DCFCE7;color:#166534}
+.live-bar.offline{background:#FEF2F2;color:#991B1B}
+.live-bar.syncing{background:#FEF9C3;color:#854D0E}
+.live-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:'Barlow',sans-serif;font-size:10px;font-weight:600;letter-spacing:.04em;transition:.15s;gap:2px}
+.nav-icon{font-size:20px;line-height:1}
+.nav-btn.active{color:var(--blue)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.page{display:none;padding:14px}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--surface);border-radius:var(--r);padding:16px;margin-bottom:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-hdr{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:var(--blue);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--gold);letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between}
+
+/* FORM */
+.ff{margin-bottom:13px}
+.ff label,.lbl{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.09em;margin-bottom:5px}
+.ff input,.ff select,.ff textarea,input.inp,select.inp{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;color:var(--navy);background:var(--surface);outline:none;font-family:'Barlow',sans-serif;transition:.2s}
+.ff input:focus,.ff select:focus{border-color:var(--blue)}
+.ff textarea{resize:vertical;min-height:52px}
+
+/* STAMPS */
+.stamp-row{display:flex;gap:7px}
+.stp{flex:1;padding:11px 2px;border:2px solid var(--border);border-radius:10px;background:var(--surface);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--muted);cursor:pointer;text-align:center;transition:.15s;line-height:1}
+.stp span.sl{font-size:8px;font-weight:600;letter-spacing:.05em;display:block;margin-top:2px;opacity:.6}
+.stp.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.stp.free-btn{border-color:var(--gold);color:var(--gold-d)}
+.stp.free-btn.on{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+
+/* BUTTONS */
+.btn{border:none;border-radius:10px;padding:12px 18px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.05em;transition:.15s;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff;width:100%;padding:14px}
+.btn-gold{background:var(--gold);color:var(--navy);width:100%;padding:14px}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--border);width:100%;padding:13px}
+.btn-danger{background:var(--red);color:#fff;width:100%;padding:14px}
+.btn-sm{padding:7px 13px;font-size:13px;width:auto}
+.btn-icon{background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:13px;color:var(--muted);transition:.15s}
+.btn:disabled,.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--surface);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border)}
+.stat-n{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--navy);line-height:1}
+.stat-l{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.08em;margin-top:3px}
+
+/* RECORDS */
+.rec{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid #F0F3FA}
+.rec:last-child{border-bottom:none}
+.rec-name{font-weight:700;font-size:14px;line-height:1.2}
+.rec-sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
+.badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.b-stamp{background:#E8EEFF;color:var(--blue)}
+.b-free{background:#FEF9C3;color:#854D0E}
+
+/* CARD PREVIEW */
+.cp{background:linear-gradient(135deg,var(--navy) 0%,var(--blue2) 100%);border-radius:16px;padding:18px;margin-bottom:14px;color:#fff;box-shadow:var(--shadow-lg)}
+.cp-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.cp-brand{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:900;letter-spacing:.04em;line-height:1}
+.cp-sub-t{font-size:9px;color:var(--gold);letter-spacing:.12em;font-weight:700;margin-top:3px}
+.cp-no{text-align:right}
+.cp-no .num{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800}
+.cp-no .lbl2{font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.07em}
+.cp-stamps{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.cp-s{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:rgba(255,255,255,.22);flex-shrink:0;transition:.3s}
+.cp-s.on{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5);color:#fff}
+.cp-s.free{background:var(--gold);border-color:var(--gold);color:var(--navy);font-size:10px}
+.cp-s.free.on{box-shadow:0 0 14px rgba(245,194,0,.4)}
+.cp-arr{color:rgba(255,255,255,.2);font-size:13px;flex-shrink:0}
+.cp-foot{display:flex;justify-content:space-between;align-items:flex-end}
+.cp-pass{font-weight:700;font-size:14px}
+.cp-status{font-size:12px;font-weight:700;text-align:right}
+.cp-status.ready{color:var(--gold)}
+.cp-status.go{color:rgba(255,255,255,.55)}
+
+/* USER LIST */
+.user-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F0F3FA}
+.user-item:last-child{border-bottom:none}
+.uav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;flex-shrink:0}
+.av-o{background:#DCFCE7;color:#166534}
+.av-d{background:#E8EEFF;color:var(--blue)}
+.av-c{background:#FEF3C7;color:#92400E}
+.uinfo{flex:1;min-width:0}
+.uinfo strong{font-size:14px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uinfo small{font-size:11px;color:var(--muted);font-weight:600}
+.uact{display:flex;gap:6px}
+
+/* MISC */
+.rv-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F0F3FA;font-size:14px}
+.rv-item:last-child{border-bottom:none}
+.reg{background:var(--gold);color:var(--navy);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:.08em;padding:3px 10px;border-radius:6px}
+.search-box{position:relative;margin-bottom:12px}
+.search-box input{padding-left:36px}
+.s-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
+.filters{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);white-space:nowrap;transition:.15s}
+.pill.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between}
+.modal-x{background:var(--bg);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--navy);color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:700;opacity:0;transition:.3s;z-index:200;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green)}
+.toast.gold{background:var(--gold);color:var(--navy)}
+.toast.err{background:var(--red)}
+.empty{text-align:center;padding:28px 12px;color:var(--muted)}
+.empty .ei{font-size:38px;margin-bottom:8px}
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sec-hdr h3{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.09em}
+
+/* PWA INSTALL BANNER */
+#install-banner{position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--navy);color:#fff;padding:14px 16px;display:none;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(11,31,92,.3);padding-bottom:max(14px,env(safe-area-inset-bottom))}
+#install-banner.show{display:flex}
+.ib-icon{width:44px;height:44px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--navy);flex-shrink:0}
+.ib-text{flex:1;min-width:0}
+.ib-text strong{display:block;font-size:14px;font-weight:700}
+.ib-text span{font-size:12px;color:rgba(255,255,255,.55)}
+.ib-btn{background:var(--gold);color:var(--navy);border:none;border-radius:10px;padding:10px 16px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.ib-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1}
+
+/* UPDATE BANNER */
+#update-banner{position:fixed;top:0;left:0;right:0;z-index:400;background:#166534;color:#fff;padding:10px 16px;display:none;align-items:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+#update-banner.show{display:flex}
+.ub-btn{background:#fff;color:#166534;border:none;border-radius:8px;padding:6px 14px;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0;margin-left:auto}
+
+/* PAGE TRANSITIONS */
+.page.active{animation:pgIn .2s ease both}
+@keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* PULL-TO-REFRESH */
+#ptr{position:absolute;top:-48px;left:0;right:0;display:flex;align-items:center;justify-content:center;height:48px;color:var(--muted);font-size:12px;font-weight:700;transition:.3s;pointer-events:none}
+#ptr .ptr-spin{width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;margin-right:8px;transition:transform .3s}
+#ptr.active .ptr-spin{animation:spin .7s linear infinite}
+
+/* OFFLINE QUEUE BADGE */
+#queue-pill{background:var(--gold);color:var(--navy);border-radius:10px;padding:2px 8px;font-size:10px;font-weight:800;display:none;margin-left:6px}
+#queue-pill.show{display:inline}
+
+/* iOS INSTALL GUIDE */
+.ios-step{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.ios-step:last-child{border-bottom:none}
+.ios-num{width:28px;height:28px;background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;margin-top:1px}
+.ios-step p{font-size:14px;color:var(--navy);line-height:1.5;margin:0}
+.ios-step p strong{display:block;font-weight:700;margin-bottom:2px}
+.ios-step p span{color:var(--muted);font-size:12px}
+.share-pill{background:var(--blue);color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;display:inline-block}
+
+/* SKELETON LOADER */
+.skel{background:linear-gradient(90deg,var(--border) 25%,#e8edfa 50%,var(--border) 75%);background-size:200%;animation:skelAnim 1.4s infinite}
+@keyframes skelAnim{0%{background-position:200%}100%{background-position:-200%}}
+.skel-row{height:52px;border-radius:10px;margin-bottom:10px}
+
+/* SAFE AREA FOR NOTCHED PHONES */
+.bottom-nav{padding-bottom:env(safe-area-inset-bottom)}
+#scr-portal,#scr-login,#scr-pin{padding-bottom:max(24px,env(safe-area-inset-bottom))}
+</style>
+</head>
+<body>
+
+<!-- UPDATE AVAILABLE BANNER -->
+<div id="update-banner">
+  <span>🔄 New version available</span>
+  <button class="ub-btn" id="update-btn">Update Now</button>
+</div>
+
+<!-- LOADING -->
+<div class="screen active" id="scr-loading">
+  <div class="loading-wrap">
+    <div class="logo-l"><span>M</span></div>
+    <div class="spinner"></div>
+    <p>LOADING...</p>
+  </div>
+</div>
+
+<!-- PORTAL -->
+<div class="screen" id="scr-portal">
+  <div class="portal-wrap">
+    <div class="portal-logo"><span>M</span></div>
+    <div class="portal-title">MUKANYA EXPRESS</div>
+    <div class="portal-sub">★ LOYALTY MANAGEMENT SYSTEM ★</div>
+    <div class="sync-chip mid" id="portal-sync">
+      <div class="sync-dot"></div><span id="portal-sync-txt">Connecting...</span>
+    </div>
+    <div class="portal-cards">
+      <div class="portal-card" onclick="goLogin('owner')">
+        <div class="pc-icon pc-owner">👑</div>
+        <div class="pc-info"><h3>OWNER / ADMIN</h3><p>Full dashboard, reports &amp; settings</p></div>
+      </div>
+      <div class="portal-card" onclick="goLogin('driver')">
+        <div class="pc-icon pc-staff">🚐</div>
+        <div class="pc-info"><h3>DRIVER / CONDUCTOR</h3><p>Record rides and check card status</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="scr-login">
+  <div style="background:var(--navy);flex:1;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="login-wrap">
+      <button class="login-back" onclick="showScr('scr-portal')">← Back</button>
+      <div class="login-header">
+        <div class="login-icon li-staff">🚐</div>
+        <div><h2>DRIVER / CONDUCTOR</h2><p>Sign in to record rides</p></div>
+      </div>
+      <div class="login-err" id="login-err"></div>
+      <div class="lfield"><label for="l-user">USERNAME</label><input id="l-user" type="text" placeholder="Your username" autocomplete="off" autocapitalize="none" required></div>
+      <div class="lfield"><label for="l-pass">PASSWORD</label><input id="l-pass" type="password" placeholder="Your password" required></div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">SIGN IN →</button>
+    </div>
+  </div>
+</div>
+
+<!-- OWNER PIN -->
+<div class="screen" id="scr-pin">
+  <div style="background:var(--navy);flex:1;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="pin-wrap">
+      <button class="pin-back" onclick="showScr('scr-portal')">← Back</button>
+      <div class="pin-logo">👑</div>
+      <div class="pin-title">OWNER DASHBOARD</div>
+      <div class="pin-sub">Enter your 4-digit PIN</div>
+      <div class="pin-dots">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pk('1')" aria-label="1">1</button><button class="pin-key" onclick="pk('2')" aria-label="2">2</button><button class="pin-key" onclick="pk('3')" aria-label="3">3</button>
+        <button class="pin-key" onclick="pk('4')" aria-label="4">4</button><button class="pin-key" onclick="pk('5')" aria-label="5">5</button><button class="pin-key" onclick="pk('6')" aria-label="6">6</button>
+        <button class="pin-key" onclick="pk('7')" aria-label="7">7</button><button class="pin-key" onclick="pk('8')" aria-label="8">8</button><button class="pin-key" onclick="pk('9')" aria-label="9">9</button>
+        <button class="pin-key del" onclick="pk('del')" aria-label="Delete">⌫</button><button class="pin-key" onclick="pk('0')" aria-label="0">0</button><button class="pin-key" onclick="pk('ok')" aria-label="OK">OK</button>
+      </div>
+      <div class="pin-err" id="pin-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="scr-app">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo"><span>M</span></div>
+      <div class="tb-info"><h2>MUKANYA EXPRESS</h2><p id="tb-sub">LOYALTY SYSTEM</p></div>
+    </div>
+    <div class="tb-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="tb-logout" onclick="doLogout()" aria-label="Log out">⏻</button>
+    </div>
+  </div>
+  <div class="live-bar syncing" id="live-bar"><div class="live-dot"></div><span id="live-txt">Connecting...</span><span id="queue-pill">0 pending</span></div>
+  <div id="ptr"><div class="ptr-spin"></div><span id="ptr-txt">Pull to refresh</span></div>
+  <div class="scroll" id="main-scroll">
+
+    <!-- RECORD RIDE -->
+    <div class="page active" id="pg-record">
+      <div class="card">
+        <div class="card-hdr">✍️ Record a Ride</div>
+        <div class="ff"><label for="r-name">PASSENGER NAME</label><input class="inp" id="r-name" placeholder="e.g. Tendai Moyo" autocomplete="off" required></div>
+        <div class="ff"><label for="r-card">CARD NUMBER</label><input class="inp" id="r-card" placeholder="e.g. 0001" inputmode="numeric" pattern="[0-9]*" oninput="onCardInput()" required></div>
+        <div class="ff"><label for="r-route">ROUTE</label><select class="inp" id="r-route" required><option value="">— Select route —</option></select></div>
+        <div class="ff"><label for="r-vehicle">VEHICLE REG</label><select class="inp" id="r-vehicle"><option value="">— Select vehicle —</option></select></div>
+        <div class="ff"><label>STAMP GIVEN</label>
+          <div class="stamp-row" id="stamp-row-dynamic">
+            <button class="stp" onclick="ps(1)" aria-label="Stamp 1">1<span class="sl">RIDE</span></button>
+            <button class="stp" onclick="ps(2)" aria-label="Stamp 2">2<span class="sl">RIDE</span></button>
+            <button class="stp" onclick="ps(3)" aria-label="Stamp 3">3<span class="sl">RIDE</span></button>
+            <button class="stp" onclick="ps(4)" aria-label="Stamp 4">4<span class="sl">RIDE</span></button>
+            <button class="stp free-btn" onclick="ps(5)" aria-label="Free ride">★<span class="sl">FREE</span></button>
+          </div>
+          <div id="stamp-hint" style="font-size:11px;color:var(--muted);margin-top:5px"></div>
+        </div>
+        <div class="ff"><label for="r-note">NOTE (OPTIONAL)</label><textarea class="inp" id="r-note" placeholder="Any remark..."></textarea></div>
+        <button class="btn btn-primary" id="save-ride-btn" onclick="saveRide()">✓ SAVE RIDE RECORD</button>
+      </div>
+    </div>
+
+    <!-- CARD LOOKUP -->
+    <div class="page" id="pg-lookup">
+      <div class="card">
+        <div class="card-hdr">🎫 Card Lookup</div>
+        <div class="ff"><label for="lk-num">ENTER CARD NUMBER</label><input class="inp" id="lk-num" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 0001" oninput="lookupCard()"></div>
+      </div>
+      <div id="lk-result"></div>
+    </div>
+
+    <!-- TODAY -->
+    <div class="page" id="pg-today">
+      <div class="stats" id="today-stats"></div>
+      <div class="card">
+        <div class="sec-hdr"><h3>TODAY'S RIDES</h3><button class="btn btn-sm btn-gold" onclick="doExport(myTodayRides(),'today')" aria-label="Export today's rides">⬇ Export</button></div>
+        <div id="today-list"></div>
+      </div>
+    </div>
+
+    <!-- STAFF RECORDS -->
+    <div class="page" id="pg-staffrecords">
+      <div class="search-box"><span class="s-icon" aria-hidden="true">🔍</span><input type="text" class="inp" placeholder="Search name, card, route..." oninput="searchStaffRec(this.value)" aria-label="Search records" style="padding-left:36px"></div>
+      <div class="filters">
+        <button class="pill on" onclick="staffRfilter('all',this)">All</button>
+        <button class="pill" onclick="staffRfilter('stamps',this)">Stamps</button>
+        <button class="pill" onclick="staffRfilter('free',this)">Free Rides</button>
+        <button class="pill" onclick="staffRfilter('today',this)">Today</button>
+        <button class="pill" onclick="staffRfilter('week',this)">This Week</button>
+      </div>
+      <div class="card"><div id="staff-all-recs"></div></div>
+    </div>
+
+    <!-- STAFF SETTINGS -->
+    <div class="page" id="pg-mysettings">
+      <div class="card">
+        <div class="card-hdr">🔐 Change My Password</div>
+        <div class="ff"><label for="sp-old">CURRENT PASSWORD</label><input class="inp" id="sp-old" type="password" required></div>
+        <div class="ff"><label for="sp-new">NEW PASSWORD</label><input class="inp" id="sp-new" type="password" placeholder="Min 4 characters" required></div>
+        <div class="ff"><label for="sp-cf">CONFIRM NEW PASSWORD</label><input class="inp" id="sp-cf" type="password" required></div>
+        <button class="btn btn-primary" onclick="changeMyPass()">SAVE PASSWORD</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page" id="pg-dash">
+      <div class="stats" id="dash-stats"></div>
+      <div class="card">
+        <div class="sec-hdr"><h3>RECENT RIDES — ALL DRIVERS</h3><button class="btn btn-sm btn-gold" onclick="doExport(DB.rides,'all_rides')" aria-label="Export all rides">⬇ Export All</button></div>
+        <div id="dash-recent"></div>
+      </div>
+    </div>
+
+    <!-- ALL RECORDS -->
+    <div class="page" id="pg-records">
+      <div class="search-box"><span class="s-icon" aria-hidden="true">🔍</span><input type="text" class="inp" placeholder="Search name, card, route, driver..." oninput="searchRec(this.value)" aria-label="Search all records" style="padding-left:36px"></div>
+      <div class="filters">
+        <button class="pill on" onclick="rfilter('all',this)">All</button>
+        <button class="pill" onclick="rfilter('stamps',this)">Stamps</button>
+        <button class="pill" onclick="rfilter('free',this)">Free Rides</button>
+        <button class="pill" onclick="rfilter('today',this)">Today</button>
+        <button class="pill" onclick="rfilter('week',this)">This Week</button>
+      </div>
+      <div class="card"><div id="all-recs"></div></div>
+    </div>
+
+    <!-- PASSENGERS -->
+    <div class="page" id="pg-passengers">
+      <button class="btn btn-primary" style="margin-bottom:14px" onclick="openM('m-addpassenger')">+ REGISTER NEW PASSENGER</button>
+      <div class="search-box"><span class="s-icon" aria-hidden="true">🔍</span><input type="text" class="inp" placeholder="Search name or card..." oninput="searchPassengers(this.value)" aria-label="Search passengers" style="padding-left:36px"></div>
+      <div class="card"><div id="passengers-list"></div></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="pg-users">
+      <button class="btn btn-primary" style="margin-bottom:14px" onclick="openM('m-adduser')">+ ADD NEW USER</button>
+      <div class="card"><div class="card-hdr">👥 All Users</div><div id="users-list"></div></div>
+    </div>
+
+    <!-- SETUP -->
+    <div class="page" id="pg-setup">
+      <div class="card"><div class="card-hdr">🗺️ Routes <button class="btn-icon btn-sm" onclick="openM('m-route')" aria-label="Add route">+ Add</button></div><div id="routes-list"></div></div>
+      <div class="card"><div class="card-hdr">🚐 Vehicles <button class="btn-icon btn-sm" onclick="openM('m-vehicle')" aria-label="Add vehicle">+ Add</button></div><div id="vehicles-list"></div></div>
+      <div class="card">
+        <div class="card-hdr">🔐 Change PIN</div>
+        <div class="ff"><label for="cp-old">CURRENT PIN</label><input class="inp" id="cp-old" type="password" maxlength="4" inputmode="numeric" required></div>
+        <div class="ff"><label for="cp-new">NEW PIN</label><input class="inp" id="cp-new" type="password" maxlength="4" inputmode="numeric" required></div>
+        <div class="ff"><label for="cp-cf">CONFIRM NEW PIN</label><input class="inp" id="cp-cf" type="password" maxlength="4" inputmode="numeric" required></div>
+        <button class="btn btn-primary" onclick="changePIN()">SAVE PIN</button>
+      </div>
+      <div class="card"><div class="card-hdr">⚠️ Data</div><button class="btn btn-danger" onclick="clearRides()" aria-label="Clear all ride records">🗑 Clear All Ride Records</button></div>
+    </div>
+
+  </div>
+  <div class="bottom-nav" id="bottom-nav"></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="m-adduser"><div class="modal">
+  <div class="modal-title">Add New User <button class="modal-x" onclick="closeM('m-adduser')" aria-label="Close">✕</button></div>
+  <div class="ff"><label for="nu-name">FULL NAME</label><input class="inp" id="nu-name" placeholder="e.g. John Banda" required></div>
+  <div class="ff"><label for="nu-user">USERNAME</label><input class="inp" id="nu-user" placeholder="e.g. johnbanda" autocapitalize="none" required></div>
+  <div class="ff"><label for="nu-pass">PASSWORD</label><input class="inp" id="nu-pass" type="password" placeholder="Min 4 characters" required></div>
+  <div class="ff"><label for="nu-role">ROLE</label><select class="inp" id="nu-role"><option value="driver">Driver</option><option value="conductor">Conductor</option></select></div>
+  <div class="ff"><label for="nu-veh">ASSIGN VEHICLE (optional)</label><select class="inp" id="nu-veh"><option value="">— None —</option></select></div>
+  <button class="btn btn-primary" onclick="addUser()" style="margin-top:6px">✓ CREATE USER</button>
+</div></div>
+
+<div class="modal-bg" id="m-edituser"><div class="modal">
+  <div class="modal-title">Edit User <button class="modal-x" onclick="closeM('m-edituser')" aria-label="Close">✕</button></div>
+  <input type="hidden" id="eu-id">
+  <div class="ff"><label for="eu-name">FULL NAME</label><input class="inp" id="eu-name" required></div>
+  <div class="ff"><label for="eu-role">ROLE</label><select class="inp" id="eu-role"><option value="driver">Driver</option><option value="conductor">Conductor</option></select></div>
+  <div class="ff"><label for="eu-veh">ASSIGN VEHICLE</label><select class="inp" id="eu-veh"><option value="">— None —</option></select></div>
+  <div class="ff"><label for="eu-pass">RESET PASSWORD (leave blank to keep)</label><input class="inp" id="eu-pass" type="password" placeholder="New password"></div>
+  <button class="btn btn-primary" onclick="saveEditUser()" style="margin-top:6px">✓ SAVE CHANGES</button>
+</div></div>
+
+<div class="modal-bg" id="m-route"><div class="modal">
+  <div class="modal-title">Add Route <button class="modal-x" onclick="closeM('m-route')" aria-label="Close">✕</button></div>
+  <div class="ff"><label for="nr-name">ROUTE NAME</label><input class="inp" id="nr-name" placeholder="e.g. Mbare – Chitungwiza" required></div>
+  <button class="btn btn-primary" onclick="addRoute()" style="margin-top:6px">✓ ADD ROUTE</button>
+</div></div>
+
+<div class="modal-bg" id="m-vehicle"><div class="modal">
+  <div class="modal-title">Add Vehicle <button class="modal-x" onclick="closeM('m-vehicle')" aria-label="Close">✕</button></div>
+  <div class="ff"><label for="nv-reg">REGISTRATION NUMBER</label><input class="inp" id="nv-reg" placeholder="e.g. AFU 1753" style="text-transform:uppercase" required></div>
+  <div class="ff"><label for="nv-desc">DESCRIPTION (optional)</label><input class="inp" id="nv-desc" placeholder="e.g. Toyota HiAce – White"></div>
+  <button class="btn btn-primary" onclick="addVehicle()" style="margin-top:6px">✓ ADD VEHICLE</button>
+</div></div>
+
+<div class="modal-bg" id="m-addpassenger"><div class="modal">
+  <div class="modal-title">Register Passenger <button class="modal-x" onclick="closeM('m-addpassenger')" aria-label="Close">✕</button></div>
+  <div class="ff"><label for="np-name">PASSENGER FULL NAME</label><input class="inp" id="np-name" placeholder="e.g. Takudzwa Moyo" required></div>
+  <div class="ff"><label for="np-card">CARD NUMBER</label><input class="inp" id="np-card" placeholder="e.g. 0001" inputmode="numeric" pattern="[0-9]*" required></div>
+  <div class="ff"><label for="np-phone">PHONE (optional)</label><input class="inp" id="np-phone" placeholder="e.g. 0771 234 567" inputmode="tel"></div>
+  <div class="ff"><label for="np-threshold">RIDES NEEDED FOR FREE RIDE</label>
+    <input class="inp" id="np-threshold" type="number" min="1" max="20" value="4">
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">e.g. 4 = free ride after every 4 rides</div>
+  </div>
+  <button class="btn btn-primary" onclick="addPassenger()" style="margin-top:6px">✓ REGISTER PASSENGER</button>
+</div></div>
+
+<div class="modal-bg" id="m-editpassenger"><div class="modal">
+  <div class="modal-title">Edit Passenger <button class="modal-x" onclick="closeM('m-editpassenger')" aria-label="Close">✕</button></div>
+  <input type="hidden" id="ep-id">
+  <div class="ff"><label for="ep-name">FULL NAME</label><input class="inp" id="ep-name" required></div>
+  <div class="ff"><label for="ep-card">CARD NUMBER</label><input class="inp" id="ep-card" inputmode="numeric" pattern="[0-9]*" required></div>
+  <div class="ff"><label for="ep-phone">PHONE</label><input class="inp" id="ep-phone" inputmode="tel"></div>
+  <div class="ff"><label for="ep-threshold">RIDES NEEDED FOR FREE RIDE</label><input class="inp" id="ep-threshold" type="number" min="1" max="20"></div>
+  <button class="btn btn-primary" onclick="saveEditPassenger()" style="margin-top:6px">✓ SAVE CHANGES</button>
+  <button class="btn btn-danger" onclick="deletePassenger()" style="margin-top:8px">🗑 Remove Passenger</button>
+</div></div>
+
+<div class="modal-bg" id="m-editride"><div class="modal">
+  <div class="modal-title">Edit Ride <button class="modal-x" onclick="closeM('m-editride')" aria-label="Close">✕</button></div>
+  <input type="hidden" id="er-id">
+  <div class="ff"><label for="er-name">PASSENGER NAME</label><input class="inp" id="er-name" required></div>
+  <div class="ff"><label for="er-card">CARD NUMBER</label><input class="inp" id="er-card" inputmode="numeric" pattern="[0-9]*" required></div>
+  <div class="ff"><label for="er-route">ROUTE</label><select class="inp" id="er-route"></select></div>
+  <div class="ff"><label for="er-vehicle">VEHICLE REG</label><select class="inp" id="er-vehicle"></select></div>
+  <div class="ff"><label>STAMP / RIDE NUMBER</label>
+    <div class="stamp-row">
+      <button class="stp" onclick="pes(1)" aria-label="Stamp 1">1<span class="sl">RIDE</span></button>
+      <button class="stp" onclick="pes(2)" aria-label="Stamp 2">2<span class="sl">RIDE</span></button>
+      <button class="stp" onclick="pes(3)" aria-label="Stamp 3">3<span class="sl">RIDE</span></button>
+      <button class="stp" onclick="pes(4)" aria-label="Stamp 4">4<span class="sl">RIDE</span></button>
+      <button class="stp free-btn" onclick="pes(5)" aria-label="Free ride">★<span class="sl">FREE</span></button>
+    </div>
+  </div>
+  <div class="ff"><label for="er-note">NOTE</label><textarea class="inp" id="er-note"></textarea></div>
+  <button class="btn btn-primary" onclick="saveEditRide()" style="margin-top:6px">✓ SAVE CHANGES</button>
+  <button class="btn btn-danger" onclick="deleteRide()" style="margin-top:8px">🗑 Delete Record</button>
+</div></div>
+
+<!-- iOS INSTALL GUIDE MODAL -->
+<div class="modal-bg" id="m-ios-install"><div class="modal">
+  <div class="modal-title">Install on iPhone / iPad <button class="modal-x" onclick="closeM('m-ios-install')" aria-label="Close">✕</button></div>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Add Mukanya Express to your home screen for the full experience — works offline, no browser bars.</p>
+  <div class="ios-step">
+    <div class="ios-num">1</div>
+    <p><strong>Tap the Share button</strong><span>Find the <span class="share-pill">⬆ Share</span> button at the bottom of Safari (or top on iPad)</span></p>
+  </div>
+  <div class="ios-step">
+    <div class="ios-num">2</div>
+    <p><strong>Tap "Add to Home Screen"</strong><span>Scroll down in the share sheet to find this option, then tap it</span></p>
+  </div>
+  <div class="ios-step">
+    <div class="ios-num">3</div>
+    <p><strong>Tap "Add" to confirm</strong><span>The Mukanya Express icon will appear on your home screen</span></p>
+  </div>
+  <button class="btn btn-primary" onclick="closeM('m-ios-install');sessionStorage.setItem('install-dismissed','1')" style="margin-top:16px">Got It ✓</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PWA INSTALL BANNER -->
+<div id="install-banner">
+  <div class="ib-icon">M</div>
+  <div class="ib-text">
+    <strong>Install Mukanya Express</strong>
+    <span>Add to home screen — works offline</span>
+  </div>
+  <button class="ib-btn" id="install-btn">Install</button>
+  <button class="ib-close" id="install-dismiss" aria-label="Dismiss">✕</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  FIREBASE SETUP — do this once before sharing/deploying
+//  ─────────────────────────────────────────────────────────────────
+//  1. Go to https://console.firebase.google.com
+//  2. Create project → Build → Firestore Database → Create
+//     (choose "Start in test mode", pick a nearby region)
+//  3. Gear icon → Project Settings → Your apps → click </>
+//     Register a web app → copy the config values below
+//  4. In Firestore → Rules, paste and Publish:
+//       rules_version = '2';
+//       service cloud.firestore {
+//         match /databases/{database}/documents {
+//           match /{document=**} { allow read, write: if true; }
+//         }
+//       }
+//
+//  Default credentials (change after first login):
+//    Owner PIN : 1234
+//    No staff accounts — add them in Users tab after logging in as Owner
+// ═══════════════════════════════════════════════════════════════════
+const FB_PROJECT = 'YOUR_FIREBASE_PROJECT_ID';   // ← replace
+const FB_KEY     = 'YOUR_FIREBASE_API_KEY';       // ← replace
+const FB_BASE    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents`;
+const FB_READY   = !FB_KEY.startsWith('YOUR_') && !FB_PROJECT.startsWith('YOUR_');
+
+// ─── SECURITY HELPERS ───
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+// Escapes a value for safe HTML injection — prevents XSS
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function isHashed(s) { return /^[0-9a-f]{64}$/.test(s); }
+
+// ─── FIREBASE FIRESTORE REST API ───
+function toFbFields(obj) {
+  const fields = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === null || v === undefined) fields[k] = {nullValue: null};
+    else if (typeof v === 'boolean')   fields[k] = {booleanValue: v};
+    else if (typeof v === 'number')    fields[k] = {integerValue: String(Math.round(v))};
+    else                               fields[k] = {stringValue: String(v)};
+  }
+  return fields;
+}
+function fromFbDoc(doc) {
+  const obj = {};
+  for (const [k, v] of Object.entries(doc.fields || {})) {
+    if      ('stringValue'  in v) obj[k] = v.stringValue;
+    else if ('booleanValue' in v) obj[k] = v.booleanValue;
+    else if ('integerValue' in v) obj[k] = parseInt(v.integerValue);
+    else if ('doubleValue'  in v) obj[k] = v.doubleValue;
+    else                          obj[k] = null;
+  }
+  return obj;
+}
+async function fbSet(col, id, data) {
+  if (!FB_READY) return false;
+  try {
+    const res = await fetch(`${FB_BASE}/${col}/${id}?key=${FB_KEY}`, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({fields: toFbFields(data)})
+    });
+    return res.ok;
+  } catch(e) { return false; }
+}
+async function fbDel(col, id) {
+  if (!FB_READY) return false;
+  try { await fetch(`${FB_BASE}/${col}/${id}?key=${FB_KEY}`, {method: 'DELETE'}); return true; } catch(e) { return false; }
+}
+async function fbList(col) {
+  if (!FB_READY) return [];
+  try {
+    const res = await fetch(`${FB_BASE}/${col}?key=${FB_KEY}&pageSize=300`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.documents || []).map(fromFbDoc);
+  } catch(e) { return []; }
+}
+
+// ─── LOCAL DB ───
+const LKEY = 'mx_v4';
+function loadLocal() {
+  try { const r = localStorage.getItem(LKEY); if (r) return JSON.parse(r); } catch(e) {}
+  return {users:[], routes:[], vehicles:[], rides:[], passengers:[], ownerPin:''};
+}
+function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify(DB)); } catch(e) {} }
+
+let DB = loadLocal();
+let CU = null, selStamp = null, pinEntry = '', syncTimer = null, lastSyncMs = 0;
+
+// ─── FIRST-RUN DEFAULTS ───
+// Only runs when there is no data at all (fresh install)
+async function initDefaults() {
+  if (DB.users.length > 0 && DB.ownerPin) return;
+  if (!DB.ownerPin) DB.ownerPin = await sha256('1234');
+  if (DB.users.length === 0) {
+    DB.users = [{id:'owner1', name:'Owner', username:'owner', password: await sha256('owner1234'), role:'owner', vehicle:'', createdAt: new Date().toISOString()}];
+  }
+  saveLocal();
+}
+
+// ─── MIGRATE PLAIN-TEXT CREDENTIALS ───
+// Upgrades any existing plain-text passwords/PINs to SHA-256 hashes
+async function migrateCredentials() {
+  let changed = false;
+  for (const u of DB.users) {
+    if (u.password && !isHashed(u.password)) {
+      u.password = await sha256(u.password);
+      changed = true;
+    }
+  }
+  if (DB.ownerPin && !isHashed(DB.ownerPin)) {
+    DB.ownerPin = await sha256(DB.ownerPin);
+    changed = true;
+  }
+  if (changed) {
+    saveLocal();
+    for (const u of DB.users) fbSet('users', u.id, u);
+    fbSet('settings', 'pin', {id:'pin', ownerPin: DB.ownerPin});
+  }
+}
+
+// ─── SYNC ───
+async function syncToCloud(col, id, data) { return fbSet(col, id, data); }
+async function deleteFromCloud(col, id)   { return fbDel(col, id); }
+
+async function loadFromCloud() {
+  if (!FB_READY) { setLive('offline'); return false; }
+  try {
+    setLive('syncing');
+    const [cu, cr, cro, cv, cp, cs] = await Promise.all([
+      fbList('users'), fbList('rides'), fbList('routes'),
+      fbList('vehicles'), fbList('passengers'), fbList('settings')
+    ]);
+    if (cu.length  > 0) DB.users      = cu;
+    if (cr.length  > 0) DB.rides      = cr.sort((a,b) => new Date(b.ts) - new Date(a.ts));
+    if (cro.length > 0) DB.routes     = cro;
+    if (cv.length  > 0) DB.vehicles   = cv;
+    if (cp.length  > 0) DB.passengers = cp;
+    const pinDoc = cs.find(s => s.id === 'pin');
+    if (pinDoc?.ownerPin) DB.ownerPin = pinDoc.ownerPin;
+    // Push local defaults to cloud on first sync
+    if (cu.length === 0) {
+      for (const u of DB.users) await fbSet('users', u.id, u);
+      await fbSet('settings', 'pin', {id:'pin', ownerPin: DB.ownerPin});
+    }
+    saveLocal();
+    setLive('online');
+    lastSyncMs = Date.now();
+    return true;
+  } catch(e) {
+    setLive('offline');
+    return false;
+  }
+}
+
+function startPolling() {
+  if (syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(async () => {
+    if (document.visibilityState === 'visible') {
+      await loadFromCloud();
+      refreshCurrentPage();
+    }
+  }, 15000);
+}
+
+function setLive(s) {
+  const bar = document.getElementById('live-bar'), txt = document.getElementById('live-txt');
+  if (!bar) return;
+  bar.className = 'live-bar ' + s;
+  if (s === 'online')  txt.textContent = '⬤ Live — syncing across all devices';
+  if (s === 'offline') txt.textContent = FB_READY ? '⬤ Offline — changes saved locally' : '⬤ Local only — add Firebase config to sync';
+  if (s === 'syncing') txt.textContent = '⬤ Syncing...';
+  const chip = document.getElementById('portal-sync'), ctxt = document.getElementById('portal-sync-txt');
+  if (!chip) return;
+  chip.className = 'sync-chip ' + (s === 'online' ? '' : 'mid');
+  if (ctxt) ctxt.textContent = s === 'online' ? 'Live — all devices synced' : s === 'offline' ? 'Offline' : 'Connecting...';
+}
+
+// ─── OFFLINE SYNC QUEUE ───
+let syncQueue = [];
+try { syncQueue = JSON.parse(localStorage.getItem('mx_queue') || '[]'); } catch(e) {}
+
+function saveQueue() {
+  localStorage.setItem('mx_queue', JSON.stringify(syncQueue));
+  const pill = document.getElementById('queue-pill');
+  if (pill) {
+    pill.textContent = syncQueue.length + ' pending';
+    pill.classList.toggle('show', syncQueue.length > 0);
+  }
+}
+
+async function queuedSync(col, id, data) {
+  const ok = await syncToCloud(col, id, data);
+  if (!ok && FB_READY) {
+    syncQueue = syncQueue.filter(q => !(q.col === col && q.id === id));
+    syncQueue.push({col, id, data});
+    saveQueue();
+  }
+  return ok;
+}
+
+async function flushQueue() {
+  if (!syncQueue.length || !FB_READY) return 0;
+  const before = syncQueue.length;
+  const failed = [];
+  for (const item of syncQueue) {
+    const ok = await fbSet(item.col, item.id, item.data);
+    if (!ok) failed.push(item);
+  }
+  syncQueue = failed;
+  saveQueue();
+  const synced = before - failed.length;
+  if (synced > 0) toast(`Synced ${synced} pending record${synced > 1 ? 's' : ''}`, 'ok');
+  return synced;
+}
+
+window.addEventListener('online', async () => {
+  setLive('syncing');
+  await flushQueue();
+  await loadFromCloud();
+  refreshCurrentPage();
+});
+
+// ─── HAPTIC FEEDBACK ───
+function haptic(pattern = 10) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ─── PULL TO REFRESH ───
+(function setupPTR() {
+  let startY = 0, pulling = false, threshold = 72;
+  const scroll = document.getElementById('main-scroll');
+  const ptr    = document.getElementById('ptr');
+  const ptrtxt = document.getElementById('ptr-txt');
+  if (!scroll || !ptr) return;
+  scroll.addEventListener('touchstart', e => { if (scroll.scrollTop === 0) { startY = e.touches[0].clientY; pulling = true; } }, {passive:true});
+  scroll.addEventListener('touchmove',  e => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 0 && dy < threshold * 1.5) {
+      ptr.style.top = Math.min(dy - 48, 0) + 'px';
+      ptrtxt.textContent = dy > threshold ? 'Release to refresh' : 'Pull to refresh';
+    }
+  }, {passive:true});
+  scroll.addEventListener('touchend', async e => {
+    if (!pulling) return;
+    pulling = false;
+    const dy = e.changedTouches[0].clientY - startY;
+    ptr.style.top = '-48px';
+    if (dy > threshold) {
+      ptr.classList.add('active');
+      ptrtxt.textContent = 'Refreshing...';
+      await loadFromCloud();
+      refreshCurrentPage();
+      ptr.classList.remove('active');
+      ptrtxt.textContent = 'Pull to refresh';
+    }
+  }, {passive:true});
+})();
+
+// ─── iOS SPLASH SCREENS (generated via Canvas) ───
+function setupSplashScreens() {
+  const screens = [
+    [640,1136,'(device-width:320px) and (device-height:568px) and (-webkit-device-pixel-ratio:2)'],
+    [750,1334,'(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2)'],
+    [1242,2208,'(device-width:414px) and (device-height:736px) and (-webkit-device-pixel-ratio:3)'],
+    [1125,2436,'(device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3)'],
+    [1242,2688,'(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3)'],
+    [828,1792,'(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2)'],
+    [1170,2532,'(device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3)'],
+    [1284,2778,'(device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3)'],
+    [1179,2556,'(device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3)'],
+    [1290,2796,'(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3)'],
+  ];
+  screens.forEach(([w,h,media]) => {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#0B1F5C'; ctx.fillRect(0,0,w,h);
+    const r = Math.min(w,h) * 0.13;
+    ctx.beginPath(); ctx.arc(w/2, h/2 - r*0.2, r, 0, Math.PI*2);
+    ctx.fillStyle = '#F5C200'; ctx.fill();
+    ctx.fillStyle = '#0B1F5C';
+    ctx.font = `900 ${r*1.2}px Arial Black,Arial`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('M', w/2, h/2 - r*0.2);
+    ctx.fillStyle = '#fff';
+    ctx.font = `700 ${r*0.45}px Arial`;
+    ctx.fillText('MUKANYA EXPRESS', w/2, h/2 + r*1.1);
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = `500 ${r*0.28}px Arial`;
+    ctx.fillText('LOYALTY MANAGEMENT SYSTEM', w/2, h/2 + r*1.6);
+    const link = document.createElement('link');
+    link.rel = 'apple-touch-startup-image'; link.media = media;
+    link.href = c.toDataURL('image/png');
+    document.head.appendChild(link);
+  });
+}
+
+// ─── PORTAL ───
+window.goLogin = mode => {
+  if (mode === 'owner') {
+    pinEntry = ''; updPinDots(); document.getElementById('pin-err').textContent = ''; showScr('scr-pin');
+  } else {
+    document.getElementById('login-err').style.display = 'none';
+    document.getElementById('l-user').value = '';
+    document.getElementById('l-pass').value = '';
+    showScr('scr-login');
+  }
+};
+
+// ─── PIN ───
+function updPinDots() { for (let i = 0; i < 4; i++) document.getElementById('pd'+i).classList.toggle('on', i < pinEntry.length); }
+window.pk = async function(k) {
+  const err = document.getElementById('pin-err');
+  if (k === 'del') { pinEntry = pinEntry.slice(0,-1); updPinDots(); return; }
+  if (pinEntry.length < 4 && k !== 'ok') { pinEntry += k; updPinDots(); }
+  if (pinEntry.length === 4) {
+    const h = await sha256(pinEntry);
+    if (h === DB.ownerPin) {
+      CU = DB.users.find(u => u.role === 'owner') || {id:'owner1', name:'Owner', role:'owner', vehicle:''};
+      launchApp('owner');
+    } else {
+      err.textContent = 'Wrong PIN — try again';
+      setTimeout(() => { pinEntry = ''; updPinDots(); err.textContent = ''; }, 800);
+    }
+  }
+};
+
+// ─── LOGIN ───
+window.doLogin = async function() {
+  const u = document.getElementById('l-user').value.trim().toLowerCase();
+  const p = document.getElementById('l-pass').value;
+  const err = document.getElementById('login-err');
+  const btn = document.getElementById('login-btn');
+  if (!u || !p) { err.textContent = 'Please enter username and password.'; err.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'SIGNING IN...';
+  try {
+    const h = await sha256(p);
+    const user = DB.users.find(x => x.username.toLowerCase() === u && x.password === h && x.role !== 'owner');
+    if (!user) { err.textContent = 'Incorrect username or password.'; err.style.display = 'block'; return; }
+    err.style.display = 'none'; CU = user; launchApp('staff');
+  } finally {
+    btn.disabled = false; btn.textContent = 'SIGN IN →';
+  }
+};
+document.getElementById('l-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// ─── LAUNCH ───
+function launchApp(mode) {
+  showScr('scr-app');
+  document.getElementById('user-chip').textContent = CU.name;
+  document.getElementById('tb-sub').textContent = '★ ' + (CU.role === 'owner' ? 'OWNER' : 'DRIVER/CONDUCTOR') + (CU.vehicle ? ' · ' + CU.vehicle : '') + ' ★';
+  buildNav(mode); populateDropdowns();
+  if (mode === 'owner') navTo('pg-dash'); else navTo('pg-record');
+  startPolling();
+  loadFromCloud().then(() => { refreshCurrentPage(); populateDropdowns(); });
+}
+
+// ─── NAV ───
+const OWNER_NAV = [{id:'pg-dash',icon:'📊',label:'Dashboard'},{id:'pg-records',icon:'📋',label:'Records'},{id:'pg-passengers',icon:'🎫',label:'Passengers'},{id:'pg-users',icon:'👥',label:'Users'},{id:'pg-setup',icon:'⚙️',label:'Setup'}];
+const STAFF_NAV = [{id:'pg-record',icon:'✍️',label:'Record'},{id:'pg-lookup',icon:'🎫',label:'Lookup'},{id:'pg-today',icon:'📅',label:'Today'},{id:'pg-staffrecords',icon:'📋',label:'Records'},{id:'pg-mysettings',icon:'🔐',label:'Settings'}];
+
+function buildNav(mode) {
+  document.getElementById('bottom-nav').innerHTML = (mode === 'owner' ? OWNER_NAV : STAFF_NAV).map(n =>
+    `<button class="nav-btn" id="nb-${n.id}" onclick="navTo('${n.id}')" aria-label="${n.label}"><span class="nav-icon" aria-hidden="true">${n.icon}</span><span>${n.label}</span></button>`
+  ).join('');
+}
+
+window.navTo = function(pgId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const pg = document.getElementById(pgId); if (pg) { pg.classList.add('active'); document.getElementById('main-scroll').scrollTop = 0; }
+  const nb = document.getElementById('nb-' + pgId); if (nb) nb.classList.add('active');
+  if (pgId === 'pg-today')        renderToday();
+  if (pgId === 'pg-dash')         renderDash();
+  if (pgId === 'pg-records')      renderAllRecs(DB.rides);
+  if (pgId === 'pg-staffrecords') renderStaffRecs(DB.rides);
+  if (pgId === 'pg-passengers')   renderPassengers();
+  if (pgId === 'pg-users')        renderUsers();
+  if (pgId === 'pg-setup')        renderSetup();
+};
+
+function refreshCurrentPage() {
+  const a = document.querySelector('.page.active'); if (!a) return;
+  const id = a.id;
+  if (id === 'pg-today')        renderToday();
+  if (id === 'pg-dash')         renderDash();
+  if (id === 'pg-records')      renderAllRecs(DB.rides);
+  if (id === 'pg-staffrecords') renderStaffRecs(DB.rides);
+  if (id === 'pg-passengers')   renderPassengers();
+  if (id === 'pg-lookup') { const v = document.getElementById('lk-num').value; if (v) lookupCard(); }
+}
+
+// ─── DROPDOWNS ───
+function populateDropdowns() {
+  const routes = DB.routes.map(r => r.name || r);
+  const vehs   = DB.vehicles.map(v => ({reg: v.reg, desc: v.desc || ''}));
+  fillSel('r-route',   routes.map(r => ({v:r, t:r})));
+  fillSel('er-route',  routes.map(r => ({v:r, t:r})));
+  fillSel('r-vehicle', vehs.map(v => ({v:v.reg, t:v.reg + (v.desc ? ' – ' + v.desc : '')})));
+  fillSel('er-vehicle',vehs.map(v => ({v:v.reg, t:v.reg + (v.desc ? ' – ' + v.desc : '')})));
+  fillSel('nu-veh',    vehs.map(v => ({v:v.reg, t:v.reg})));
+  fillSel('eu-veh',    vehs.map(v => ({v:v.reg, t:v.reg})));
+  if (CU?.vehicle) { const s = document.getElementById('r-vehicle'); if (s) s.value = CU.vehicle; }
+}
+function fillSel(id, opts) {
+  const el = document.getElementById(id); if (!el) return;
+  const first = el.options[0];
+  el.innerHTML = (first ? `<option value="${esc(first.value)}">${esc(first.text)}</option>` : '') +
+    opts.map(o => `<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+}
+
+// ─── PASSENGER HELPERS ───
+function getPassenger(card)   { return (DB.passengers || []).find(p => p.card === card) || null; }
+function getThreshold(card)   { const p = getPassenger(card); return p && p.threshold ? parseInt(p.threshold) : 4; }
+function getCurrentStamps(card) {
+  const rides = DB.rides.filter(r => r.card === card).sort((a,b) => new Date(a.ts) - new Date(b.ts));
+  let s = 0; for (const r of rides) { if (r.isFree) s = 0; else s++; } return Math.min(s, getThreshold(card));
+}
+
+window.onCardInput = function() {
+  const card = document.getElementById('r-card').value.trim();
+  const hint = document.getElementById('stamp-hint');
+  if (card && !/^\d+$/.test(card)) { hint.textContent = 'Card number must be numeric'; return; }
+  const threshold = getThreshold(card), current = getCurrentStamps(card);
+  const row = document.getElementById('stamp-row-dynamic');
+  let html = '';
+  for (let i = 1; i <= threshold; i++) html += `<button class="stp${selStamp===i?' on':''}" onclick="ps(${i})" aria-label="Stamp ${i}">${i}<span class="sl">RIDE</span></button>`;
+  html += `<button class="stp free-btn${selStamp===threshold+1?' on':''}" onclick="ps(${threshold+1})" aria-label="Free ride">★<span class="sl">FREE</span></button>`;
+  row.innerHTML = html;
+  const p = getPassenger(card);
+  // Auto-fill passenger name if registered and name field is empty
+  const nameEl = document.getElementById('r-name');
+  if (p && nameEl && !nameEl.value.trim()) nameEl.value = p.name;
+  const ready = p && current >= threshold;
+  hint.textContent = card ? (p ? `${p.name} — ${current}/${threshold} rides${ready ? ' 🎁 FREE READY!' : ''}` : `${current}/${threshold} rides · Free after ${threshold} rides`) : '';
+  hint.style.color = ready ? 'var(--gold-d)' : '';
+};
+
+// ─── STAMPS ───
+window.ps  = function(n) { selStamp  = n; document.querySelectorAll('#stamp-row-dynamic .stp').forEach((b,i) => b.classList.toggle('on', i+1===n)); haptic(8); };
+let editStamp = null;
+window.pes = function(n) { editStamp = n; document.querySelectorAll('#m-editride .stp').forEach((b,i) => b.classList.toggle('on', i+1===n)); haptic(8); };
+
+// ─── SAVE RIDE ───
+window.saveRide = async function() {
+  const name    = document.getElementById('r-name').value.trim();
+  const card    = document.getElementById('r-card').value.trim();
+  const route   = document.getElementById('r-route').value;
+  const vehicle = document.getElementById('r-vehicle').value;
+  if (!name)                         { toast('Enter passenger name', 'err'); return; }
+  if (!card || !/^\d+$/.test(card))  { toast('Enter a valid numeric card number', 'err'); return; }
+  if (!route)                        { toast('Select a route', 'err'); return; }
+  if (!selStamp)                     { toast('Select stamp number', 'err'); return; }
+  const btn = document.getElementById('save-ride-btn');
+  btn.disabled = true;
+  try {
+    const threshold = getThreshold(card);
+    const ride = {
+      id: 'r' + Date.now(), name, card, route, vehicle,
+      staff: CU.name, staffId: CU.id, role: CU.role,
+      stamp: selStamp, isFree: selStamp === threshold + 1, threshold,
+      note: document.getElementById('r-note').value.trim(),
+      date: toDay(), ts: new Date().toISOString()
+    };
+    DB.rides.unshift(ride); saveLocal();
+    const synced = await queuedSync('rides', ride.id, ride);
+    haptic(ride.isFree ? [30,20,30] : 15);
+    ['r-name','r-card','r-note'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+    document.getElementById('r-route').value = '';
+    if (!CU.vehicle) document.getElementById('r-vehicle').value = '';
+    selStamp = null; document.getElementById('stamp-hint').textContent = '';
+    document.getElementById('stamp-row-dynamic').innerHTML =
+      '<button class="stp" onclick="ps(1)" aria-label="Stamp 1">1<span class="sl">RIDE</span></button>' +
+      '<button class="stp" onclick="ps(2)" aria-label="Stamp 2">2<span class="sl">RIDE</span></button>' +
+      '<button class="stp" onclick="ps(3)" aria-label="Stamp 3">3<span class="sl">RIDE</span></button>' +
+      '<button class="stp" onclick="ps(4)" aria-label="Stamp 4">4<span class="sl">RIDE</span></button>' +
+      '<button class="stp free-btn" onclick="ps(5)" aria-label="Free ride">★<span class="sl">FREE</span></button>';
+    const offlineNote = synced ? '' : ' (saved offline)';
+    toast(ride.isFree ? '🎉 FREE ride recorded!' + offlineNote : '✓ Stamp ' + ride.stamp + ' — ' + name + offlineNote, ride.isFree ? 'gold' : 'ok');
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ─── CARD LOOKUP ───
+window.lookupCard = function() {
+  const num = document.getElementById('lk-num').value.trim();
+  const el  = document.getElementById('lk-result');
+  if (!num) { el.innerHTML = ''; return; }
+  const cardRides = DB.rides.filter(r => r.card === num).sort((a,b) => new Date(b.ts) - new Date(a.ts));
+  if (!cardRides.length) { el.innerHTML = `<div class="card"><div class="empty"><div class="ei">🎫</div><p>No records for card #${esc(num)}</p></div></div>`; return; }
+  const threshold = getThreshold(num), stamps = getCurrentStamps(num);
+  const name = cardRides[0].name, total = cardRides.length, frees = cardRides.filter(r => r.isFree).length;
+  let sh = '';
+  for (let i = 1; i <= threshold; i++) { sh += `<div class="cp-s ${i<=stamps?'on':''}">${i}</div>`; if (i < threshold) sh += `<div class="cp-arr">›</div>`; }
+  sh += `<div class="cp-arr">›</div><div class="cp-s free ${stamps>=threshold?'on':''}">FREE</div>`;
+  el.innerHTML = `<div class="cp">
+    <div class="cp-top"><div><div class="cp-brand">MUKANYA EXPRESS</div><div class="cp-sub-t">★ LOYALTY CARD ★</div></div>
+    <div class="cp-no"><div class="lbl2">CARD NO.</div><div class="num">#${esc(num)}</div><div style="font-size:9px;color:var(--gold);margin-top:2px">FREE AFTER ${threshold} RIDES</div></div></div>
+    <div class="cp-stamps">${sh}</div>
+    <div class="cp-foot"><div><div class="cp-pass">${esc(name)}</div><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:3px">${total} ride${total!==1?'s':''} · ${frees} free used</div></div>
+    <div class="cp-status ${stamps>=threshold?'ready':'go'}">${stamps>=threshold?'🎁 FREE READY!':threshold-stamps+' more to go'}</div></div></div>
+    <div class="card"><div class="sec-hdr"><h3>RIDE HISTORY</h3></div>${cardRides.slice(0,8).map(recRow).join('')}</div>`;
+};
+
+// ─── TODAY ───
+window.myTodayRides = () => DB.rides.filter(r => r.date === toDay() && r.staffId === CU?.id);
+function renderToday() {
+  const tod = myTodayRides(), frees = tod.filter(r => r.isFree).length, uniq = new Set(tod.map(r => r.name)).size;
+  document.getElementById('today-stats').innerHTML =
+    `<div class="stat"><div class="stat-n">${tod.length}</div><div class="stat-l">RIDES</div></div>` +
+    `<div class="stat"><div class="stat-n">${frees}</div><div class="stat-l">FREE RIDES</div></div>` +
+    `<div class="stat"><div class="stat-n">${uniq}</div><div class="stat-l">PASSENGERS</div></div>`;
+  document.getElementById('today-list').innerHTML = tod.length ? tod.map(recRow).join('') : `<div class="empty"><div class="ei">🚐</div><p>No rides today yet</p></div>`;
+}
+
+// ─── DASHBOARD ───
+function renderDash() {
+  const tod = DB.rides.filter(r => r.date === toDay()), frees = DB.rides.filter(r => r.isFree).length;
+  document.getElementById('dash-stats').innerHTML =
+    `<div class="stat"><div class="stat-n">${DB.rides.length}</div><div class="stat-l">TOTAL RIDES</div></div>` +
+    `<div class="stat"><div class="stat-n">${tod.length}</div><div class="stat-l">TODAY</div></div>` +
+    `<div class="stat"><div class="stat-n">${frees}</div><div class="stat-l">FREE GIVEN</div></div>`;
+  document.getElementById('dash-recent').innerHTML = DB.rides.length ? DB.rides.slice(0,15).map(recRow).join('') : `<div class="empty"><div class="ei">📋</div><p>No rides yet</p></div>`;
+}
+
+// ─── ALL RECORDS ───
+function renderAllRecs(list)  { document.getElementById('all-recs').innerHTML       = list.length ? list.map(recRow).join('') : `<div class="empty"><div class="ei">📋</div><p>No records found</p></div>`; }
+function renderStaffRecs(list){ document.getElementById('staff-all-recs').innerHTML = list.length ? list.map(recRow).join('') : `<div class="empty"><div class="ei">📋</div><p>No records found</p></div>`; }
+window.searchRec      = q => { q = q.toLowerCase(); renderAllRecs(DB.rides.filter(r  => r.name.toLowerCase().includes(q)||r.card.includes(q)||r.route.toLowerCase().includes(q)||(r.staff||'').toLowerCase().includes(q))); };
+window.searchStaffRec = q => { q = q.toLowerCase(); renderStaffRecs(DB.rides.filter(r => r.name.toLowerCase().includes(q)||r.card.includes(q)||r.route.toLowerCase().includes(q)||(r.staff||'').toLowerCase().includes(q))); };
+window.rfilter      = (f,el) => { document.querySelectorAll('#pg-records .pill').forEach(p=>p.classList.remove('on')); el.classList.add('on'); renderAllRecs(f==='all'?DB.rides:f==='stamps'?DB.rides.filter(r=>!r.isFree):f==='free'?DB.rides.filter(r=>r.isFree):f==='today'?DB.rides.filter(r=>r.date===toDay()):DB.rides.filter(r=>(Date.now()-new Date(r.ts))/864e5<7)); };
+window.staffRfilter = (f,el) => { el.closest('.filters').querySelectorAll('.pill').forEach(p=>p.classList.remove('on')); el.classList.add('on'); renderStaffRecs(f==='all'?DB.rides:f==='stamps'?DB.rides.filter(r=>!r.isFree):f==='free'?DB.rides.filter(r=>r.isFree):f==='today'?DB.rides.filter(r=>r.date===toDay()):DB.rides.filter(r=>(Date.now()-new Date(r.ts))/864e5<7)); };
+
+function canEdit(r) { return CU && (CU.role === 'owner' || r.staffId === CU.id); }
+function recRow(r) {
+  const editBtn = canEdit(r) ? `<button class="btn-icon" style="margin-top:2px;flex-shrink:0" aria-label="Edit ride" onclick="openEditRide('${esc(r.id)}')">✏️</button>` : '';
+  return `<div class="rec"><div style="flex:1;min-width:0"><div class="rec-name">${esc(r.name)} <small style="color:var(--muted);font-weight:400">#${esc(r.card)}</small></div><div class="rec-sub">${esc(r.route)}${r.vehicle?' · '+esc(r.vehicle):''} · ${fmtTs(r.ts)}${r.staff?' · '+esc(r.staff):''}</div></div><div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0"><span class="badge ${r.isFree?'b-free':'b-stamp'}">${r.isFree?'★ FREE':'STAMP '+r.stamp}</span>${editBtn}</div></div>`;
+}
+
+// ─── EDIT RIDE ───
+window.openEditRide = function(id) {
+  const r = DB.rides.find(x => x.id === id); if (!r) return;
+  document.getElementById('er-id').value    = id;
+  document.getElementById('er-name').value  = r.name;
+  document.getElementById('er-card').value  = r.card;
+  document.getElementById('er-note').value  = r.note || '';
+  fillSel('er-route',   DB.routes.map(rt  => ({v: rt.name||rt, t: rt.name||rt})));
+  fillSel('er-vehicle', DB.vehicles.map(v => ({v: v.reg, t: v.reg + (v.desc?' – '+v.desc:'')})));
+  document.getElementById('er-route').value   = r.route   || '';
+  document.getElementById('er-vehicle').value = r.vehicle || '';
+  editStamp = r.stamp;
+  document.querySelectorAll('#m-editride .stp').forEach((b,i) => b.classList.toggle('on', i+1 === r.stamp));
+  openM('m-editride');
+};
+window.saveEditRide = async function() {
+  const id      = document.getElementById('er-id').value;
+  const name    = document.getElementById('er-name').value.trim();
+  const card    = document.getElementById('er-card').value.trim();
+  const route   = document.getElementById('er-route').value;
+  const vehicle = document.getElementById('er-vehicle').value;
+  const note    = document.getElementById('er-note').value.trim();
+  if (!name || !card || !route || !editStamp) { toast('Please fill all required fields', 'err'); return; }
+  if (!/^\d+$/.test(card)) { toast('Card number must be numeric', 'err'); return; }
+  const r = DB.rides.find(x => x.id === id); if (!r) return;
+  r.name = name; r.card = card; r.route = route; r.vehicle = vehicle; r.stamp = editStamp; r.isFree = editStamp === 5; r.note = note;
+  saveLocal(); await syncToCloud('rides', id, r);
+  closeM('m-editride'); refreshCurrentPage(); toast('Ride updated', 'ok');
+};
+window.deleteRide = async function() {
+  const id = document.getElementById('er-id').value;
+  if (!confirm('Delete this ride record?')) return;
+  DB.rides = DB.rides.filter(x => x.id !== id); saveLocal();
+  await deleteFromCloud('rides', id);
+  closeM('m-editride'); refreshCurrentPage(); toast('Ride deleted');
+};
+
+// ─── PASSENGERS ───
+function renderPassengers() {
+  if (!DB.passengers) DB.passengers = [];
+  const el = document.getElementById('passengers-list');
+  if (!DB.passengers.length) { el.innerHTML = `<div class="empty"><div class="ei">🎫</div><p>No passengers registered yet</p></div>`; return; }
+  el.innerHTML = DB.passengers.map(p => {
+    const stamps = getCurrentStamps(p.card), threshold = parseInt(p.threshold)||4, pct = Math.round(stamps/threshold*100), ready = stamps >= threshold;
+    return `<div class="user-item"><div class="uav av-d">${esc(p.name.charAt(0).toUpperCase())}</div>` +
+      `<div class="uinfo" style="flex:1"><strong>${esc(p.name)}</strong><small>Card #${esc(p.card)}${p.phone?' · '+esc(p.phone):''} · Free after ${threshold} rides</small>` +
+      `<div style="margin-top:5px;background:var(--border);border-radius:4px;height:6px"><div style="background:${ready?'var(--gold)':'var(--blue)'};height:6px;border-radius:4px;width:${Math.min(pct,100)}%"></div></div>` +
+      `<div style="font-size:10px;color:var(--muted);margin-top:3px">${ready?'🎁 FREE RIDE READY':stamps+'/'+threshold+' rides'}</div></div>` +
+      `<div class="uact"><button class="btn-icon" aria-label="Edit passenger" onclick="editPassenger('${esc(p.id)}')">✏️</button><button class="btn-icon" style="color:var(--red)" aria-label="Remove passenger" onclick="removePassenger('${esc(p.id)}')">🗑</button></div></div>`;
+  }).join('');
+}
+window.searchPassengers = q => {
+  if (!DB.passengers) DB.passengers = [];
+  q = q.toLowerCase();
+  const el = document.getElementById('passengers-list');
+  const list = DB.passengers.filter(p => p.name.toLowerCase().includes(q) || p.card.includes(q));
+  el.innerHTML = list.length ? list.map(p => {
+    const stamps = getCurrentStamps(p.card), threshold = parseInt(p.threshold)||4, ready = stamps >= threshold;
+    return `<div class="user-item"><div class="uav av-d">${esc(p.name.charAt(0).toUpperCase())}</div><div class="uinfo" style="flex:1"><strong>${esc(p.name)}</strong><small>Card #${esc(p.card)} · Free after ${threshold} rides · ${ready?'🎁 FREE READY':stamps+'/'+threshold}</small></div><div class="uact"><button class="btn-icon" aria-label="Edit passenger" onclick="editPassenger('${esc(p.id)}')">✏️</button><button class="btn-icon" style="color:var(--red)" aria-label="Remove passenger" onclick="removePassenger('${esc(p.id)}')">🗑</button></div></div>`;
+  }).join('') : `<div class="empty"><p>No results</p></div>`;
+};
+window.addPassenger = async function() {
+  if (!DB.passengers) DB.passengers = [];
+  const name      = document.getElementById('np-name').value.trim();
+  const card      = document.getElementById('np-card').value.trim();
+  const phone     = document.getElementById('np-phone').value.trim();
+  const threshold = parseInt(document.getElementById('np-threshold').value) || 4;
+  if (!name)                        { toast('Enter passenger name', 'err'); return; }
+  if (!card || !/^\d+$/.test(card)) { toast('Enter a valid numeric card number', 'err'); return; }
+  if (DB.passengers.find(p => p.card === card)) { toast('Card already registered', 'err'); return; }
+  const np = {id:'p'+Date.now(), name, card, phone, threshold, createdAt: new Date().toISOString()};
+  DB.passengers.push(np); saveLocal(); await syncToCloud('passengers', np.id, np);
+  closeM('m-addpassenger');
+  ['np-name','np-card','np-phone'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('np-threshold').value = '4';
+  renderPassengers(); toast('Passenger registered: ' + name, 'ok');
+};
+window.editPassenger = id => {
+  const p = (DB.passengers||[]).find(x => x.id === id); if (!p) return;
+  document.getElementById('ep-id').value        = id;
+  document.getElementById('ep-name').value      = p.name;
+  document.getElementById('ep-card').value      = p.card;
+  document.getElementById('ep-phone').value     = p.phone || '';
+  document.getElementById('ep-threshold').value = p.threshold || 4;
+  openM('m-editpassenger');
+};
+window.saveEditPassenger = async function() {
+  const id        = document.getElementById('ep-id').value;
+  const name      = document.getElementById('ep-name').value.trim();
+  const card      = document.getElementById('ep-card').value.trim();
+  const phone     = document.getElementById('ep-phone').value.trim();
+  const threshold = parseInt(document.getElementById('ep-threshold').value) || 4;
+  if (!name || !card)               { toast('Name and card required', 'err'); return; }
+  if (!/^\d+$/.test(card))          { toast('Card number must be numeric', 'err'); return; }
+  const p = (DB.passengers||[]).find(x => x.id === id); if (!p) return;
+  p.name = name; p.card = card; p.phone = phone; p.threshold = threshold;
+  saveLocal(); await syncToCloud('passengers', id, p);
+  closeM('m-editpassenger'); renderPassengers(); toast('Passenger updated', 'ok');
+};
+window.removePassenger = async id => {
+  const p = (DB.passengers||[]).find(x => x.id === id); if (!p) return;
+  if (!confirm(`Remove "${p.name}"?`)) return;
+  DB.passengers = DB.passengers.filter(x => x.id !== id); saveLocal();
+  await deleteFromCloud('passengers', id); renderPassengers(); toast('Passenger removed');
+};
+window.deletePassenger = function() { const id = document.getElementById('ep-id').value; closeM('m-editpassenger'); removePassenger(id); };
+
+// ─── USERS ───
+function renderUsers() {
+  const staff = DB.users.filter(u => u.role !== 'owner');
+  const el = document.getElementById('users-list');
+  if (!staff.length) { el.innerHTML = `<div class="empty"><div class="ei">👥</div><p>No drivers or conductors yet</p></div>`; return; }
+  el.innerHTML = staff.map(u =>
+    `<div class="user-item"><div class="uav ${u.role==='conductor'?'av-c':'av-d'}">${esc(u.name.charAt(0).toUpperCase())}</div>` +
+    `<div class="uinfo"><strong>${esc(u.name)}</strong><small>${esc(u.username)} · ${u.role.charAt(0).toUpperCase()+u.role.slice(1)}${u.vehicle?' · '+esc(u.vehicle):''}</small></div>` +
+    `<div class="uact"><button class="btn-icon" aria-label="Edit user" onclick="editUser('${esc(u.id)}')">✏️</button>` +
+    `${u.id!==CU?.id?`<button class="btn-icon" style="color:var(--red)" aria-label="Delete user" onclick="delUser('${esc(u.id)}')">🗑</button>`:''}</div></div>`
+  ).join('');
+}
+window.addUser = async function() {
+  const name = document.getElementById('nu-name').value.trim();
+  const user = document.getElementById('nu-user').value.trim().toLowerCase();
+  const pass = document.getElementById('nu-pass').value;
+  const role = document.getElementById('nu-role').value;
+  const veh  = document.getElementById('nu-veh').value;
+  if (!name)          { toast('Enter full name', 'err'); return; }
+  if (!user)          { toast('Enter username', 'err'); return; }
+  if (pass.length<4)  { toast('Password min 4 characters', 'err'); return; }
+  if (DB.users.find(u => u.username.toLowerCase() === user)) { toast('Username already exists', 'err'); return; }
+  const hashedPass = await sha256(pass);
+  const nu = {id:'u'+Date.now(), name, username:user, password:hashedPass, role, vehicle:veh, createdAt:new Date().toISOString()};
+  DB.users.push(nu); saveLocal(); await syncToCloud('users', nu.id, nu);
+  closeM('m-adduser');
+  ['nu-name','nu-user','nu-pass'].forEach(id => document.getElementById(id).value = '');
+  renderUsers(); toast('User created: ' + name, 'ok');
+};
+window.editUser = id => {
+  const u = DB.users.find(x => x.id === id); if (!u) return;
+  document.getElementById('eu-id').value   = id;
+  document.getElementById('eu-name').value = u.name;
+  document.getElementById('eu-role').value = u.role;
+  document.getElementById('eu-pass').value = '';
+  fillSel('eu-veh', DB.vehicles.map(v => ({v:v.reg, t:v.reg})));
+  document.getElementById('eu-veh').value = u.vehicle || '';
+  openM('m-edituser');
+};
+window.saveEditUser = async function() {
+  const id   = document.getElementById('eu-id').value;
+  const name = document.getElementById('eu-name').value.trim();
+  const role = document.getElementById('eu-role').value;
+  const veh  = document.getElementById('eu-veh').value;
+  const pass = document.getElementById('eu-pass').value;
+  const u = DB.users.find(x => x.id === id); if (!u || !name) { toast('Enter name', 'err'); return; }
+  u.name = name; u.role = role; u.vehicle = veh;
+  if (pass) { if (pass.length < 4) { toast('Password min 4 chars', 'err'); return; } u.password = await sha256(pass); }
+  saveLocal(); await syncToCloud('users', id, u);
+  closeM('m-edituser'); renderUsers(); toast('User updated', 'ok');
+};
+window.delUser = async id => {
+  const u = DB.users.find(x => x.id === id); if (!u) return;
+  if (!confirm(`Delete user "${u.name}"?`)) return;
+  DB.users = DB.users.filter(x => x.id !== id); saveLocal();
+  await deleteFromCloud('users', id); renderUsers(); toast('User deleted');
+};
+
+// ─── ROUTES & VEHICLES ───
+function renderSetup() {
+  document.getElementById('routes-list').innerHTML = DB.routes.length ?
+    DB.routes.map((r,i) => `<div class="rv-item"><span>${esc(r.name||r)}</span><button class="btn-icon" style="color:var(--red)" aria-label="Delete route" onclick="delRoute(${i})">🗑</button></div>`).join('') :
+    `<div class="empty"><div class="ei">🗺️</div><p>No routes added yet</p></div>`;
+  document.getElementById('vehicles-list').innerHTML = DB.vehicles.length ?
+    DB.vehicles.map((v,i) => `<div class="rv-item"><span class="reg">${esc(v.reg)}</span><span style="flex:1;font-size:13px;color:var(--muted);margin-left:10px">${esc(v.desc||'')}</span><button class="btn-icon" style="color:var(--red)" aria-label="Delete vehicle" onclick="delVehicle(${i})">🗑</button></div>`).join('') :
+    `<div class="empty"><div class="ei">🚐</div><p>No vehicles added yet</p></div>`;
+}
+window.addRoute   = async function(){ const name=document.getElementById('nr-name').value.trim(); if(!name){toast('Enter route name','err');return;} if(DB.routes.find(r=>(r.name||r).toLowerCase()===name.toLowerCase())){toast('Route already exists','err');return;} const obj={id:'rt'+Date.now(),name}; DB.routes.push(obj); saveLocal(); await syncToCloud('routes',obj.id,obj); closeM('m-route'); document.getElementById('nr-name').value=''; populateDropdowns(); renderSetup(); toast('Route added','ok'); };
+window.delRoute   = async i => { if(!confirm('Delete this route?'))return; const r=DB.routes[i]; DB.routes.splice(i,1); saveLocal(); if(r.id) await deleteFromCloud('routes',r.id); populateDropdowns(); renderSetup(); toast('Route deleted'); };
+window.addVehicle = async function(){ const reg=document.getElementById('nv-reg').value.trim().toUpperCase(),desc=document.getElementById('nv-desc').value.trim(); if(!reg){toast('Enter registration number','err');return;} if(DB.vehicles.find(v=>v.reg===reg)){toast('Vehicle already exists','err');return;} const obj={id:'v'+Date.now(),reg,desc}; DB.vehicles.push(obj); saveLocal(); await syncToCloud('vehicles',obj.id,obj); closeM('m-vehicle'); document.getElementById('nv-reg').value=''; document.getElementById('nv-desc').value=''; populateDropdowns(); renderSetup(); toast('Vehicle added','ok'); };
+window.delVehicle = async i => { if(!confirm('Delete this vehicle?'))return; const v=DB.vehicles[i]; DB.vehicles.splice(i,1); saveLocal(); if(v.id) await deleteFromCloud('vehicles',v.id); populateDropdowns(); renderSetup(); toast('Vehicle deleted'); };
+
+// ─── PIN & PASSWORDS ───
+window.changePIN = async function() {
+  const old = document.getElementById('cp-old').value;
+  const nw  = document.getElementById('cp-new').value;
+  const cf  = document.getElementById('cp-cf').value;
+  const hashedOld = await sha256(old);
+  if (hashedOld !== DB.ownerPin) { toast('Current PIN is wrong', 'err'); return; }
+  if (!/^\d{4}$/.test(nw))       { toast('PIN must be exactly 4 digits', 'err'); return; }
+  if (nw !== cf)                  { toast('PINs do not match', 'err'); return; }
+  const hashedNew = await sha256(nw);
+  DB.ownerPin = hashedNew; saveLocal();
+  await syncToCloud('settings', 'pin', {id:'pin', ownerPin: hashedNew});
+  ['cp-old','cp-new','cp-cf'].forEach(id => document.getElementById(id).value = '');
+  toast('PIN changed!', 'ok');
+};
+window.changeMyPass = async function() {
+  const old = document.getElementById('sp-old').value;
+  const nw  = document.getElementById('sp-new').value;
+  const cf  = document.getElementById('sp-cf').value;
+  const hashedOld = await sha256(old);
+  if (hashedOld !== CU.password) { toast('Current password is wrong', 'err'); return; }
+  if (nw.length < 4)             { toast('Password min 4 characters', 'err'); return; }
+  if (nw !== cf)                  { toast('Passwords do not match', 'err'); return; }
+  const hashedNew = await sha256(nw);
+  const u = DB.users.find(x => x.id === CU.id);
+  if (u) { u.password = hashedNew; CU.password = hashedNew; saveLocal(); await syncToCloud('users', CU.id, u); }
+  ['sp-old','sp-new','sp-cf'].forEach(id => document.getElementById(id).value = '');
+  toast('Password changed!', 'ok');
+};
+
+// ─── EXPORT ───
+window.doExport = function(list, fname) {
+  if (!list.length) { toast('No records to export', 'err'); return; }
+  const hdr = 'Date,Time,Passenger,Card No,Route,Vehicle,Staff,Role,Stamp,Free Ride,Note';
+  const rows = list.map(r => {
+    const d = new Date(r.ts);
+    return [d.toLocaleDateString('en-GB'), d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+      r.name, r.card, r.route, r.vehicle||'', r.staff||'', r.role||'',
+      r.isFree?'FREE':r.stamp, r.isFree?'Yes':'No', r.note||''
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const blob = new Blob([[hdr,...rows].join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = fname + '_' + toDay() + '.csv'; a.click();
+  toast('Exported!', 'ok');
+};
+
+// ─── CLEAR ───
+window.clearRides = async function() {
+  if (!confirm('Delete ALL ride records permanently?')) return;
+  const ids = DB.rides.map(r => r.id); DB.rides = []; saveLocal();
+  for (const id of ids) await deleteFromCloud('rides', id);
+  renderDash(); toast('All ride records cleared');
+};
+
+// ─── LOGOUT ───
+window.doLogout = function() {
+  CU = null; selStamp = null; pinEntry = '';
+  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('login-err').style.display = 'none';
+  showScr('scr-portal');
+};
+
+// ─── MODAL ───
+window.openM  = id => document.getElementById(id).classList.add('open');
+window.closeM = id => document.getElementById(id).classList.remove('open');
+document.querySelectorAll('.modal-bg').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+
+// ─── UTILS ───
+window.showScr = function(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
+window.toast   = function(msg, type='') { const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(type?' '+type:''); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2800); };
+function toDay()  { return new Date().toISOString().split('T')[0]; }
+function fmtTs(ts){ if(!ts)return ''; const d=new Date(ts); const isToday=d.toDateString()===new Date().toDateString(); return (isToday?'Today ':d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' ')+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+
+// ─── PWA ───
+function isIOS()        { return /iPad|iPhone|iPod/.test(navigator.userAgent); }
+function isAndroid()    { return /Android/.test(navigator.userAgent); }
+function isStandalone() { return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches; }
+
+let _deferredInstall = null;
+
+function showInstallBanner(platform) {
+  if (isStandalone() || sessionStorage.getItem('install-dismissed')) return;
+  const banner  = document.getElementById('install-banner');
+  const btnText = document.getElementById('install-banner').querySelector('.ib-text');
+  const btn     = document.getElementById('install-btn');
+  if (!banner) return;
+  if (platform === 'ios') {
+    btnText.querySelector('strong').textContent = 'Install on iPhone / iPad';
+    btnText.querySelector('span').textContent   = 'Tap Share → Add to Home Screen';
+    btn.textContent = 'Show me how';
+    btn.onclick = () => { openM('m-ios-install'); };
+  } else {
+    btnText.querySelector('strong').textContent = 'Install Mukanya Express';
+    btnText.querySelector('span').textContent   = 'Add to home screen — works offline';
+    btn.textContent = 'Install';
+    btn.onclick = async () => {
+      if (!_deferredInstall) return;
+      _deferredInstall.prompt();
+      const { outcome } = await _deferredInstall.userChoice;
+      if (outcome === 'accepted') banner.classList.remove('show');
+      _deferredInstall = null;
+    };
+  }
+  banner.classList.add('show');
+}
+
+// Android: native install prompt
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredInstall = e;
+  showInstallBanner('android');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner')?.classList.remove('show');
+  _deferredInstall = null;
+  toast('App installed — find it on your home screen!', 'ok');
+});
+
+document.getElementById('install-dismiss').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.remove('show');
+  sessionStorage.setItem('install-dismissed', '1');
+});
+
+// iOS: show guide banner after 3 s if not installed
+if (isIOS() && !isStandalone()) {
+  setTimeout(() => showInstallBanner('ios'), 3000);
+}
+
+// Service worker with update detection
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    // Detect new SW waiting to activate
+    const check = w => {
+      if (!w) return;
+      w.addEventListener('statechange', () => {
+        if (w.state === 'installed' && navigator.serviceWorker.controller) {
+          document.getElementById('update-banner')?.classList.add('show');
+        }
+      });
+    };
+    if (reg.waiting) check(reg.waiting);
+    reg.addEventListener('updatefound', () => check(reg.installing));
+
+    // Re-check for updates every 60 s while tab is open
+    setInterval(() => reg.update(), 60000);
+  }).catch(() => {});
+
+  // Reload once the new SW takes control
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) { refreshing = true; window.location.reload(); }
+  });
+}
+
+document.getElementById('update-btn')?.addEventListener('click', async () => {
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (reg?.waiting) reg.waiting.postMessage('skipWaiting');
+  setTimeout(() => window.location.reload(), 200);
+});
+
+// ─── INIT ───
+window.addEventListener('load', async () => {
+  setLive('syncing');
+  await initDefaults();
+  await migrateCredentials();
+  saveQueue(); // restore pending-sync badge from previous session
+  try {
+    await loadFromCloud();
+  } catch(e) {
+    setLive('offline');
+  }
+  showScr('scr-portal');
+  // Generate iOS splash screens in idle time — non-blocking
+  if (isIOS() && 'requestIdleCallback' in window) {
+    requestIdleCallback(setupSplashScreens, {timeout: 3000});
+  } else if (isIOS()) {
+    setTimeout(setupSplashScreens, 1000);
+  }
+});
+</script>
+</body>
+</html>
