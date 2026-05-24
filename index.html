@@ -13,6 +13,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -612,68 +614,43 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--navy);font
 //    Owner PIN : 1234
 //    No staff accounts — add them in Users tab after logging in as Owner
 // ═══════════════════════════════════════════════════════════════════
-const FB_PROJECT = 'YOUR_FIREBASE_PROJECT_ID';   // ← replace
-const FB_KEY     = 'YOUR_FIREBASE_API_KEY';       // ← replace
-const FB_BASE    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents`;
-const FB_READY   = !FB_KEY.startsWith('YOUR_') && !FB_PROJECT.startsWith('YOUR_');
+// ─── FIREBASE CONFIG ───
+//  1. Go to https://console.firebase.google.com
+//  2. Create project → Build → Firestore Database → Create (test mode, nearby region)
+//  3. Gear icon → Project Settings → Your apps → </> → copy config values below
+//  4. Firestore → Rules → paste and Publish:
+//       rules_version = '2';
+//       service cloud.firestore {
+//         match /databases/{database}/documents {
+//           match /{document=**} { allow read, write: if true; }
+//         }
+//       }
+//  Default owner PIN: 1234
+const firebaseConfig = {
+  apiKey:            'AIzaSyCPfVsKSrQAuD8ldcCoC61x8WL-My-Ais4',
+  authDomain:        'mukanya-express-65136.firebaseapp.com',
+  projectId:         'mukanya-express-65136',
+  storageBucket:     'mukanya-express-65136.firebasestorage.app',
+  messagingSenderId: '235883568719',
+  appId:             '1:235883568719:web:bf6ba1f907e2b78f38943a',
+  databaseURL:       'https://mukanya-express-65136-default-rtdb.europe-west1.firebasedatabase.app'
+};
+const FB_READY = !firebaseConfig.apiKey.startsWith('YOUR_');
+let db = null;
+if (FB_READY) {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+}
 
 // ─── SECURITY HELPERS ───
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
-// Escapes a value for safe HTML injection — prevents XSS
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function isHashed(s) { return /^[0-9a-f]{64}$/.test(s); }
-
-// ─── FIREBASE FIRESTORE REST API ───
-function toFbFields(obj) {
-  const fields = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v === null || v === undefined) fields[k] = {nullValue: null};
-    else if (typeof v === 'boolean')   fields[k] = {booleanValue: v};
-    else if (typeof v === 'number')    fields[k] = {integerValue: String(Math.round(v))};
-    else                               fields[k] = {stringValue: String(v)};
-  }
-  return fields;
-}
-function fromFbDoc(doc) {
-  const obj = {};
-  for (const [k, v] of Object.entries(doc.fields || {})) {
-    if      ('stringValue'  in v) obj[k] = v.stringValue;
-    else if ('booleanValue' in v) obj[k] = v.booleanValue;
-    else if ('integerValue' in v) obj[k] = parseInt(v.integerValue);
-    else if ('doubleValue'  in v) obj[k] = v.doubleValue;
-    else                          obj[k] = null;
-  }
-  return obj;
-}
-async function fbSet(col, id, data) {
-  if (!FB_READY) return false;
-  try {
-    const res = await fetch(`${FB_BASE}/${col}/${id}?key=${FB_KEY}`, {
-      method: 'PATCH',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({fields: toFbFields(data)})
-    });
-    return res.ok;
-  } catch(e) { return false; }
-}
-async function fbDel(col, id) {
-  if (!FB_READY) return false;
-  try { await fetch(`${FB_BASE}/${col}/${id}?key=${FB_KEY}`, {method: 'DELETE'}); return true; } catch(e) { return false; }
-}
-async function fbList(col) {
-  if (!FB_READY) return [];
-  try {
-    const res = await fetch(`${FB_BASE}/${col}?key=${FB_KEY}&pageSize=300`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.documents || []).map(fromFbDoc);
-  } catch(e) { return []; }
-}
 
 // ─── LOCAL DB ───
 const LKEY = 'mx_v4';
@@ -684,7 +661,7 @@ function loadLocal() {
 function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify(DB)); } catch(e) {} }
 
 let DB = loadLocal();
-let CU = null, selStamp = null, pinEntry = '', syncTimer = null, lastSyncMs = 0;
+let CU = null, selStamp = null, pinEntry = '';
 
 // ─── FIRST-RUN DEFAULTS ───
 // Only runs when there is no data at all (fresh install)
@@ -713,53 +690,82 @@ async function migrateCredentials() {
   }
   if (changed) {
     saveLocal();
-    for (const u of DB.users) fbSet('users', u.id, u);
-    fbSet('settings', 'pin', {id:'pin', ownerPin: DB.ownerPin});
+    for (const u of DB.users) syncToCloud('users', u.id, u);
+    syncToCloud('settings', 'pin', {id:'pin', ownerPin: DB.ownerPin});
   }
 }
 
 // ─── SYNC ───
-async function syncToCloud(col, id, data) { return fbSet(col, id, data); }
-async function deleteFromCloud(col, id)   { return fbDel(col, id); }
-
-async function loadFromCloud() {
-  if (!FB_READY) { setLive('offline'); return false; }
-  try {
-    setLive('syncing');
-    const [cu, cr, cro, cv, cp, cs] = await Promise.all([
-      fbList('users'), fbList('rides'), fbList('routes'),
-      fbList('vehicles'), fbList('passengers'), fbList('settings')
-    ]);
-    if (cu.length  > 0) DB.users      = cu;
-    if (cr.length  > 0) DB.rides      = cr.sort((a,b) => new Date(b.ts) - new Date(a.ts));
-    if (cro.length > 0) DB.routes     = cro;
-    if (cv.length  > 0) DB.vehicles   = cv;
-    if (cp.length  > 0) DB.passengers = cp;
-    const pinDoc = cs.find(s => s.id === 'pin');
-    if (pinDoc?.ownerPin) DB.ownerPin = pinDoc.ownerPin;
-    // Push local defaults to cloud on first sync
-    if (cu.length === 0) {
-      for (const u of DB.users) await fbSet('users', u.id, u);
-      await fbSet('settings', 'pin', {id:'pin', ownerPin: DB.ownerPin});
-    }
-    saveLocal();
-    setLive('online');
-    lastSyncMs = Date.now();
-    return true;
-  } catch(e) {
-    setLive('offline');
-    return false;
-  }
+async function syncToCloud(col, id, data) {
+  if (!FB_READY) return false;
+  try { await db.ref(col + '/' + id).set(data); return true; } catch(e) { return false; }
+}
+async function deleteFromCloud(col, id) {
+  if (!FB_READY) return false;
+  try { await db.ref(col + '/' + id).remove(); return true; } catch(e) { return false; }
 }
 
-function startPolling() {
-  if (syncTimer) clearInterval(syncTimer);
-  syncTimer = setInterval(async () => {
-    if (document.visibilityState === 'visible') {
-      await loadFromCloud();
-      refreshCurrentPage();
+// ─── REAL-TIME LISTENERS ───
+let _unsubs = [];
+function stopRealtimeListeners() {
+  _unsubs.forEach(fn => fn());
+  _unsubs = [];
+}
+function setupRealtimeListeners() {
+  if (!FB_READY) { setLive('offline'); return; }
+  stopRealtimeListeners();
+  setLive('syncing');
+
+  let pendingFirst = 6;
+  let live = false;
+
+  function listen(col, merge) {
+    let first = true;
+    const ref = db.ref(col);
+    const handler = snap => {
+      const val = snap.val();
+      const docs = val ? Object.values(val) : [];
+      merge(docs);
+      saveLocal();
+      if (first) { first = false; pendingFirst--; }
+      if (pendingFirst <= 0) {
+        if (!live) { live = true; setLive('online'); }
+        refreshCurrentPage();
+        populateDropdowns();
+      }
+    };
+    ref.on('value', handler, () => setLive('offline'));
+    _unsubs.push(() => ref.off('value', handler));
+  }
+
+  listen('users',      docs => { if (docs.length) DB.users = docs; });
+  listen('rides',      docs => { if (docs.length) DB.rides = docs.sort((a,b) => new Date(b.ts) - new Date(a.ts)); });
+  listen('routes',     docs => { if (docs.length) DB.routes = docs; });
+  listen('vehicles',   docs => { if (docs.length) DB.vehicles = docs; });
+  listen('passengers', docs => { if (docs.length) DB.passengers = docs; });
+
+  // Settings listener
+  {
+    let first = true;
+    const ref = db.ref('settings/pin');
+    const handler = snap => {
+      const val = snap.val();
+      if (val?.ownerPin) DB.ownerPin = val.ownerPin;
+      saveLocal();
+      if (first) { first = false; pendingFirst--; }
+      if (pendingFirst <= 0 && !live) { live = true; setLive('online'); }
+    };
+    ref.on('value', handler, () => setLive('offline'));
+    _unsubs.push(() => ref.off('value', handler));
+  }
+
+  // Push local defaults on first run (empty database)
+  db.ref('users').once('value').then(snap => {
+    if (!snap.val()) {
+      DB.users.forEach(u => db.ref('users/' + u.id).set(u));
+      db.ref('settings/pin').set({id:'pin', ownerPin: DB.ownerPin});
     }
-  }, 15000);
+  }).catch(() => {});
 }
 
 function setLive(s) {
@@ -775,50 +781,8 @@ function setLive(s) {
   if (ctxt) ctxt.textContent = s === 'online' ? 'Live — all devices synced' : s === 'offline' ? 'Offline' : 'Connecting...';
 }
 
-// ─── OFFLINE SYNC QUEUE ───
-let syncQueue = [];
-try { syncQueue = JSON.parse(localStorage.getItem('mx_queue') || '[]'); } catch(e) {}
-
-function saveQueue() {
-  localStorage.setItem('mx_queue', JSON.stringify(syncQueue));
-  const pill = document.getElementById('queue-pill');
-  if (pill) {
-    pill.textContent = syncQueue.length + ' pending';
-    pill.classList.toggle('show', syncQueue.length > 0);
-  }
-}
-
-async function queuedSync(col, id, data) {
-  const ok = await syncToCloud(col, id, data);
-  if (!ok && FB_READY) {
-    syncQueue = syncQueue.filter(q => !(q.col === col && q.id === id));
-    syncQueue.push({col, id, data});
-    saveQueue();
-  }
-  return ok;
-}
-
-async function flushQueue() {
-  if (!syncQueue.length || !FB_READY) return 0;
-  const before = syncQueue.length;
-  const failed = [];
-  for (const item of syncQueue) {
-    const ok = await fbSet(item.col, item.id, item.data);
-    if (!ok) failed.push(item);
-  }
-  syncQueue = failed;
-  saveQueue();
-  const synced = before - failed.length;
-  if (synced > 0) toast(`Synced ${synced} pending record${synced > 1 ? 's' : ''}`, 'ok');
-  return synced;
-}
-
-window.addEventListener('online', async () => {
-  setLive('syncing');
-  await flushQueue();
-  await loadFromCloud();
-  refreshCurrentPage();
-});
+// Firestore SDK handles offline queuing automatically via enablePersistence
+window.addEventListener('online', () => { if (FB_READY) setLive('online'); });
 
 // ─── HAPTIC FEEDBACK ───
 function haptic(pattern = 10) {
@@ -849,7 +813,7 @@ function haptic(pattern = 10) {
     if (dy > threshold) {
       ptr.classList.add('active');
       ptrtxt.textContent = 'Refreshing...';
-      await loadFromCloud();
+      await new Promise(r => setTimeout(r, 400));
       refreshCurrentPage();
       ptr.classList.remove('active');
       ptrtxt.textContent = 'Pull to refresh';
@@ -952,8 +916,7 @@ function launchApp(mode) {
   document.getElementById('tb-sub').textContent = '★ ' + (CU.role === 'owner' ? 'OWNER' : 'DRIVER/CONDUCTOR') + (CU.vehicle ? ' · ' + CU.vehicle : '') + ' ★';
   buildNav(mode); populateDropdowns();
   if (mode === 'owner') navTo('pg-dash'); else navTo('pg-record');
-  startPolling();
-  loadFromCloud().then(() => { refreshCurrentPage(); populateDropdowns(); });
+  setupRealtimeListeners();
 }
 
 // ─── NAV ───
@@ -1064,7 +1027,7 @@ window.saveRide = async function() {
       date: toDay(), ts: new Date().toISOString()
     };
     DB.rides.unshift(ride); saveLocal();
-    const synced = await queuedSync('rides', ride.id, ride);
+    const synced = await syncToCloud('rides', ride.id, ride);
     haptic(ride.isFree ? [30,20,30] : 15);
     ['r-name','r-card','r-note'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
     document.getElementById('r-route').value = '';
@@ -1376,7 +1339,7 @@ window.clearRides = async function() {
 // ─── LOGOUT ───
 window.doLogout = function() {
   CU = null; selStamp = null; pinEntry = '';
-  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+  stopRealtimeListeners();
   document.getElementById('l-user').value = '';
   document.getElementById('l-pass').value = '';
   document.getElementById('login-err').style.display = 'none';
@@ -1484,15 +1447,8 @@ document.getElementById('update-btn')?.addEventListener('click', async () => {
 
 // ─── INIT ───
 window.addEventListener('load', async () => {
-  setLive('syncing');
   await initDefaults();
   await migrateCredentials();
-  saveQueue(); // restore pending-sync badge from previous session
-  try {
-    await loadFromCloud();
-  } catch(e) {
-    setLive('offline');
-  }
   showScr('scr-portal');
   // Generate iOS splash screens in idle time — non-blocking
   if (isIOS() && 'requestIdleCallback' in window) {
