@@ -1,4 +1,4 @@
-const CACHE = 'mukanya-v2'; // bump version to trigger update notification on existing installs
+const CACHE = 'mukanya-v3'; // bumped — forces update on installed PWAs
 
 const APP_SHELL = [
   '/',
