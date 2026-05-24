@@ -1411,37 +1411,26 @@ if (isIOS() && !isStandalone()) {
   setTimeout(() => showInstallBanner('ios'), 3000);
 }
 
-// Service worker with update detection
+// Service worker — auto-update, no manual step needed
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').then(reg => {
-    // Detect new SW waiting to activate
-    const check = w => {
-      if (!w) return;
-      w.addEventListener('statechange', () => {
-        if (w.state === 'installed' && navigator.serviceWorker.controller) {
-          document.getElementById('update-banner')?.classList.add('show');
-        }
-      });
-    };
-    if (reg.waiting) check(reg.waiting);
-    reg.addEventListener('updatefound', () => check(reg.installing));
-
-    // Re-check for updates every 60 s while tab is open
-    setInterval(() => reg.update(), 60000);
+    // Check for updates every 30 s while tab is open
+    setInterval(() => reg.update(), 30000);
   }).catch(() => {});
 
-  // Reload once the new SW takes control
+  // When new SW takes control, reload silently (or with brief toast if logged in)
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) { refreshing = true; window.location.reload(); }
+    if (refreshing) return;
+    refreshing = true;
+    if (!CU) {
+      window.location.reload();
+    } else {
+      toast('App updated — reloading...', 'ok');
+      setTimeout(() => window.location.reload(), 1500);
+    }
   });
 }
-
-document.getElementById('update-btn')?.addEventListener('click', async () => {
-  const reg = await navigator.serviceWorker.getRegistration();
-  if (reg?.waiting) reg.waiting.postMessage('skipWaiting');
-  setTimeout(() => window.location.reload(), 200);
-});
 
 // ─── INIT ───
 window.addEventListener('load', async () => {

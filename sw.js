@@ -1,19 +1,19 @@
-const CACHE = 'mukanya-v3'; // bumped — forces update on installed PWAs
+const CACHE = 'mukanya-v4';
 
 const APP_SHELL = [
   '/',
   '/index.html',
 ];
 
-// Install: cache app shell so the app loads offline
+// Install: cache app shell then activate immediately — no waiting
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(APP_SHELL))
   );
-  // Don't skipWaiting here — wait for the user to confirm update
+  self.skipWaiting();
 });
 
-// Activate: remove stale caches from old versions
+// Activate: remove stale caches, claim all clients immediately
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -23,20 +23,17 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Message handler — client sends 'skipWaiting' to activate the new SW
-self.addEventListener('message', event => {
-  if (event.data === 'skipWaiting') self.skipWaiting();
-});
-
 // Fetch strategy:
-//   Google APIs (Firebase, Firestore) → network only  (never cache live data)
-//   Google Fonts                       → stale-while-revalidate
-//   Everything else (app shell)        → cache first, network fallback
+//   Firebase Realtime Database / googleapis → network only (never cache live data)
+//   Google Fonts / gstatic SDKs            → stale-while-revalidate
+//   Everything else (app shell)            → network first, cache fallback
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Never intercept Firebase, Firestore, or any googleapis call
-  if (url.hostname.includes('googleapis.com') || url.hostname.includes('firebase')) {
+  // Never intercept Firebase or Google API calls
+  if (url.hostname.includes('googleapis.com') ||
+      url.hostname.includes('firebase') ||
+      url.hostname.includes('gstatic.com')) {
     event.respondWith(
       fetch(event.request).catch(() => new Response(JSON.stringify({error:'offline'}), {
         status: 503,
@@ -46,7 +43,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Google Fonts: serve cached, refresh in background
+  // Google Fonts: stale-while-revalidate
   if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(
       caches.open(CACHE).then(cache =>
@@ -62,17 +59,15 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // App shell: cache first, then network; cache any new responses
+  // App shell: network first so updates are picked up immediately,
+  // fall back to cache when offline
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(res => {
-        if (res && res.status === 200 && res.type !== 'opaque') {
-          const clone = res.clone();
-          caches.open(CACHE).then(cache => cache.put(event.request, clone));
-        }
-        return res;
-      });
-    })
+    fetch(event.request).then(res => {
+      if (res && res.status === 200 && res.type !== 'opaque') {
+        const clone = res.clone();
+        caches.open(CACHE).then(cache => cache.put(event.request, clone));
+      }
+      return res;
+    }).catch(() => caches.match(event.request))
   );
 });
