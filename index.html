@@ -716,25 +716,28 @@ function setupRealtimeListeners() {
   stopRealtimeListeners();
   setLive('syncing');
 
-  let pendingFirst = 6;
-  let live = false;
+  // Firebase's built-in connection state — most reliable way
+  const connRef = db.ref('.info/connected');
+  const connHandler = snap => setLive(snap.val() === true ? 'online' : 'offline');
+  connRef.on('value', connHandler);
+  _unsubs.push(() => connRef.off('value', connHandler));
+
+  // Debounce UI refresh so all listeners settling at once = 1 render
+  let _rt = null;
+  function scheduleRefresh() {
+    clearTimeout(_rt);
+    _rt = setTimeout(() => { refreshCurrentPage(); populateDropdowns(); }, 120);
+  }
 
   function listen(col, merge) {
-    let first = true;
     const ref = db.ref(col);
     const handler = snap => {
       const val = snap.val();
-      const docs = val ? Object.values(val) : [];
-      merge(docs);
+      merge(val ? Object.values(val) : []);
       saveLocal();
-      if (first) { first = false; pendingFirst--; }
-      if (pendingFirst <= 0) {
-        if (!live) { live = true; setLive('online'); }
-        refreshCurrentPage();
-        populateDropdowns();
-      }
+      scheduleRefresh();
     };
-    ref.on('value', handler, () => setLive('offline'));
+    ref.on('value', handler, () => {});
     _unsubs.push(() => ref.off('value', handler));
   }
 
@@ -744,18 +747,13 @@ function setupRealtimeListeners() {
   listen('vehicles',   docs => { if (docs.length) DB.vehicles = docs; });
   listen('passengers', docs => { if (docs.length) DB.passengers = docs; });
 
-  // Settings listener
   {
-    let first = true;
     const ref = db.ref('settings/pin');
     const handler = snap => {
       const val = snap.val();
-      if (val?.ownerPin) DB.ownerPin = val.ownerPin;
-      saveLocal();
-      if (first) { first = false; pendingFirst--; }
-      if (pendingFirst <= 0 && !live) { live = true; setLive('online'); }
+      if (val?.ownerPin) { DB.ownerPin = val.ownerPin; saveLocal(); }
     };
-    ref.on('value', handler, () => setLive('offline'));
+    ref.on('value', handler, () => {});
     _unsubs.push(() => ref.off('value', handler));
   }
 
@@ -1449,6 +1447,7 @@ document.getElementById('update-btn')?.addEventListener('click', async () => {
 window.addEventListener('load', async () => {
   await initDefaults();
   await migrateCredentials();
+  setLive('offline');
   showScr('scr-portal');
   // Generate iOS splash screens in idle time — non-blocking
   if (isIOS() && 'requestIdleCallback' in window) {
